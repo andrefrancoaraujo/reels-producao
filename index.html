@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reels Prédio — Painel de Produção</title>
+<style>
+:root{--bg:#1a1a2e;--bg2:#16213e;--bg3:#0f3460;--card:#1e2746;--card2:#243054;--accent:#00d4aa;--accent2:#00b894;--text:#e8e8e8;--text2:#a0a0b8;--red:#ff6b6b;--yellow:#ffd93d;--green:#00d4aa;--blue:#4da6ff;--orange:#ff9f43;--font:'Courier New',monospace;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6;min-height:100vh}
+.header{background:linear-gradient(135deg,var(--bg2),var(--bg3));padding:16px 20px;text-align:center;border-bottom:2px solid var(--accent);position:sticky;top:0;z-index:100}
+.header h1{font-size:1.3em;color:var(--accent);font-family:var(--font);letter-spacing:2px}
+.stats{display:flex;gap:16px;justify-content:center;margin-top:8px;flex-wrap:wrap}
+.stat{background:rgba(0,212,170,0.1);border:1px solid rgba(0,212,170,0.3);border-radius:8px;padding:4px 14px;font-size:0.85em;color:var(--accent)}
+.tabs{display:flex;gap:0;margin-top:12px;justify-content:center}
+.tab{background:transparent;border:1px solid var(--text2);color:var(--text2);padding:8px 24px;cursor:pointer;font-size:0.95em;font-weight:600;transition:all .2s;border-radius:0}
+.tab:first-child{border-radius:8px 0 0 8px}
+.tab:last-child{border-radius:0 8px 8px 0}
+.tab.active{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.tab:hover:not(.active){background:rgba(0,212,170,0.15);color:var(--accent);border-color:var(--accent)}
+.content{max-width:900px;margin:0 auto;padding:16px}
+.view{display:none}
+.view.active{display:block}
+.location-block{margin-bottom:24px}
+.location-header{background:linear-gradient(135deg,var(--bg3),var(--bg2));padding:16px 20px;border-radius:12px 12px 0 0;border-left:4px solid var(--accent);cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.location-header h2{font-size:1.15em;color:var(--accent)}
+.location-header .meta{font-size:0.85em;color:var(--text2);text-align:right}
+.location-body{background:var(--card);border-radius:0 0 12px 12px;padding:16px;border-left:4px solid rgba(0,212,170,0.3)}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px}
+.info-box{background:var(--card2);border-radius:8px;padding:12px}
+.info-box h4{color:var(--accent);font-size:0.8em;text-transform:uppercase;margin-bottom:6px;letter-spacing:1px}
+.info-box p,.info-box li{font-size:0.9em;color:var(--text2)}
+.info-box ul{list-style:none;padding:0}
+.info-box li::before{content:"• ";color:var(--accent)}
+.take-card{background:var(--card2);border-radius:8px;margin:8px 0;overflow:hidden;border:1px solid transparent;transition:border-color .2s}
+.take-card:hover{border-color:rgba(0,212,170,0.3)}
+.take-head{padding:10px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.take-head .num{color:var(--accent);font-family:var(--font);font-weight:700;margin-right:10px;font-size:0.9em}
+.take-head .title{flex:1;font-size:0.9em}
+.take-head .reel-tag{background:rgba(0,212,170,0.15);color:var(--accent);padding:2px 8px;border-radius:4px;font-size:0.75em;margin-left:6px}
+.take-head .dur{color:var(--yellow);font-size:0.8em;margin-left:8px}
+.take-head .arrow{color:var(--text2);transition:transform .2s;font-size:0.8em}
+.take-body{padding:0 14px 12px;display:none;font-size:0.88em;color:var(--text2)}
+.take-body.open{display:block}
+.take-head .arrow.open{transform:rotate(90deg)}
+.broll-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.broll-item{background:rgba(77,166,255,0.1);border:1px solid rgba(77,166,255,0.3);color:var(--blue);padding:3px 10px;border-radius:20px;font-size:0.8em}
+.order-list{counter-reset:o;list-style:none;padding:0}
+.order-list li{counter-increment:o;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.9em;color:var(--text2)}
+.order-list li::before{content:counter(o) ". ";color:var(--accent);font-weight:700}
+/* Tab 2 - Editor */
+.reel-card{background:var(--card);border-radius:12px;margin:12px 0;overflow:hidden;border:1px solid rgba(255,255,255,0.05)}
+.reel-head{padding:14px 18px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,var(--card),var(--card2))}
+.reel-head h3{font-size:1em;color:var(--text)}
+.reel-head h3 span.rnum{color:var(--accent);font-family:var(--font);margin-right:8px}
+.reel-head .rmeta{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.reel-head .loc-tag{background:rgba(255,159,67,0.15);color:var(--orange);padding:2px 8px;border-radius:4px;font-size:0.75em}
+.reel-head .dur-tag{color:var(--yellow);font-size:0.8em}
+.reel-body{padding:18px;display:none}
+.reel-body.open{display:block}
+.edit-section{margin-bottom:16px}
+.edit-section h4{color:var(--accent);font-size:0.85em;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid rgba(0,212,170,0.2)}
+.timeline{font-family:var(--font);font-size:0.85em;line-height:1.8}
+.timeline .ts{color:var(--yellow);font-weight:700}
+.timeline .act{color:var(--text2)}
+.assets-list,.sfx-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.asset-tag{background:rgba(0,212,170,0.1);border:1px solid rgba(0,212,170,0.2);color:var(--accent);padding:3px 10px;border-radius:20px;font-size:0.8em}
+.sfx-tag{background:rgba(255,107,107,0.1);border:1px solid rgba(255,107,107,0.2);color:var(--red);padding:3px 10px;border-radius:20px;font-size:0.8em}
+.checklist{list-style:none;padding:0}
+.checklist li{padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03);font-size:0.88em;color:var(--text2)}
+.checklist li::before{content:"☐ ";color:var(--accent)}
+/* Tab 3 - André */
+.sub-tabs{display:flex;gap:0;margin-bottom:16px;flex-wrap:wrap}
+.sub-tab{background:var(--card);border:1px solid rgba(255,255,255,0.1);color:var(--text2);padding:8px 16px;cursor:pointer;font-size:0.85em;transition:all .2s}
+.sub-tab:first-child{border-radius:8px 0 0 8px}
+.sub-tab:last-child{border-radius:0 8px 8px 0}
+.sub-tab.active{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.sub-view{display:none}
+.sub-view.active{display:block}
+.ordem-card{background:var(--card);border-radius:12px;padding:16px;margin:10px 0;border-left:4px solid var(--accent);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.ordem-card .num{color:var(--accent);font-family:var(--font);font-size:1.3em;font-weight:700;margin-right:12px}
+.ordem-card .info{flex:1}
+.ordem-card .info h4{font-size:1em}
+.ordem-card .info p{font-size:0.85em;color:var(--text2)}
+.ordem-card .time{color:var(--yellow);font-size:0.9em;font-weight:600}
+.mat-section{background:var(--card);border-radius:12px;padding:16px;margin:12px 0}
+.mat-section h3{color:var(--accent);font-size:1em;margin-bottom:12px;border-bottom:1px solid rgba(0,212,170,0.2);padding-bottom:6px}
+.mat-item{padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03);font-size:0.9em;color:var(--text2);display:flex;align-items:flex-start;gap:8px;cursor:pointer}
+.mat-item .check{width:20px;height:20px;border:2px solid var(--accent);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:0.7em;transition:all .2s}
+.mat-item.done .check{background:var(--accent);color:var(--bg)}
+.mat-item.done span{text-decoration:line-through;opacity:0.5}
+.tp-block{background:var(--card);border-radius:12px;padding:20px;margin:12px 0}
+.tp-block h3{color:var(--accent);font-size:0.95em;margin-bottom:4px}
+.tp-block .tp-loc{color:var(--orange);font-size:0.8em;margin-bottom:12px}
+.tp-text{font-size:1.15em;line-height:1.9;color:var(--text);font-weight:600}
+.legenda-card{background:var(--card);border-radius:12px;padding:16px;margin:12px 0}
+.legenda-card h3{color:var(--accent);font-size:0.95em;margin-bottom:8px}
+.legenda-text{font-size:0.9em;color:var(--text2);white-space:pre-wrap;line-height:1.7;margin-bottom:10px}
+.copy-btn{background:var(--accent);color:var(--bg);border:none;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:0.85em;font-weight:600;transition:all .2s}
+.copy-btn:hover{background:var(--accent2)}
+.copy-btn.copied{background:var(--green)}
+.edit-general{background:rgba(0,212,170,0.05);border:1px solid rgba(0,212,170,0.15);border-radius:8px;padding:12px;margin-bottom:12px;font-size:0.88em;color:var(--text2);line-height:1.7}
+@media(max-width:600px){
+.header h1{font-size:1em}.tab{padding:6px 14px;font-size:0.85em}.content{padding:10px}
+.tp-text{font-size:1.05em}.info-grid{grid-template-columns:1fr}
+.sub-tab{padding:6px 10px;font-size:0.78em}
+}
+</style>
+</head>
+<body>
+<div class="header">
+<h1>REELS PREDIO — PAINEL DE PRODUCAO</h1>
+<div class="stats">
+<div class="stat">20 Reels</div>
+<div class="stat">5 Locacoes</div>
+<div class="stat">~10h de filmagem</div>
+<div class="stat">2 dias</div>
+</div>
+<div class="tabs">
+<button class="tab active" onclick="showView('videomaker')">Videomaker</button>
+<button class="tab" onclick="showView('editor')">Editor</button>
+<button class="tab" onclick="showView('andre')">Andre</button>
+</div>
+</div>
+<div class="content">
+<!-- ==================== TAB 1: VIDEOMAKER ==================== -->
+<div class="view active" id="view-videomaker">
+
+<!-- PADEL -->
+<div class="location-block">
+<div class="location-header" onclick="toggleLoc(this)">
+<div><h2>Quadra de Padel</h2><small style="color:var(--text2)">Reels 6, 9, 13, 19 — 20 takes</small></div>
+<div class="meta">80-90 min<br><span style="font-size:0.8em">Dry-fit escura + bermuda esportiva</span></div>
+</div>
+<div class="location-body">
+<div class="info-grid">
+<div class="info-box"><h4>Figurino</h4><p>Camiseta dry-fit escura + bermuda esportiva + tenis. Sem bone.</p></div>
+<div class="info-box"><h4>Iluminacao / Audio</h4><p>Luz natural da quadra. Lapela wireless obrigatorio. Room tone 10s antes de comecar.</p></div>
+<div class="info-box"><h4>Equipamento</h4><p>Gimbal para caminhadas. Tripe para takes fixos. Low angle em varios takes.</p></div>
+</div>
+
+<h4 style="color:var(--accent);margin:12px 0 8px;font-size:0.85em">ORDEM DE FILMAGEM</h4>
+<ol class="order-list">
+<li>B-roll quadra vazia</li>
+<li>Takes 15-16 — Jogo real + para e olha camera (Reel 19)</li>
+<li>Takes 5-8 — Duas raquetes, ouro vs Bitcoin, batida (Reel 9)</li>
+<li>Takes 1-4 — Entrada, fala, bola, rebatida (Reel 6)</li>
+<li>Take 9 — Caminhada explicando (Reels 9, 19)</li>
+<li>Takes 11-14 — Real/Dolar: quique, rebatida, tom serio (Reel 13)</li>
+<li>Takes 17-20 — Finais padel: gesto, trofeu, sorriso (Reel 19)</li>
+<li>Take 10 — Smash, Andre aquecido (Reel 9)</li>
+<li>B-roll restante</li>
+</ol>
+
+<h4 style="color:var(--accent);margin:16px 0 8px;font-size:0.85em">TAKES</h4>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T01</span><span class="title">Entrada lateral quadra</span><span class="reel-tag">Reel 6</span><span class="dur">5s</span><span class="arrow">&#9654;</span></div><div class="take-body">Plano medio. 3 takes. Andre entra pela lateral da quadra.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T02</span><span class="title">Raquete apontada camera + fala</span><span class="reel-tag">Reel 6</span><span class="dur">10s</span><span class="arrow">&#9654;</span></div><div class="take-body">Andre aponta raquete para a camera enquanto fala. Plano medio.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T03</span><span class="title">Bola na mao + mostra camera</span><span class="reel-tag">Reel 6</span><span class="reel-tag">Reel 13</span><span class="dur">5s</span><span class="arrow">&#9654;</span></div><div class="take-body">Close na bola de padel na mao, mostra para camera. Usado em 2 Reels.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T04</span><span class="title">Rebatida parede vidro</span><span class="reel-tag">Reel 6</span><span class="dur">4s</span><span class="arrow">&#9654;</span></div><div class="take-body">5+ takes. Rebatida na parede de vidro. Capturar som e impacto visual.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T05</span><span class="title">Duas raquetes, uma cada mao, low angle</span><span class="reel-tag">Reel 9</span><span class="dur">5s</span><span class="arrow">&#9654;</span></div><div class="take-body">Low angle. Andre segura duas raquetes representando ouro e Bitcoin.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T06</span><span class="title">Levanta raquete esquerda "ouro"</span><span class="reel-tag">Reel 9</span><span class="dur">7s</span><span class="arrow">&#9654;</span></div><div class="take-body">Levanta raquete esquerda representando ouro. Dramatico.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T07</span><span class="title">Levanta raquete direita "Bitcoin"</span><span class="reel-tag">Reel 9</span><span class="dur">7s</span><span class="arrow">&#9654;</span></div><div class="take-body">Levanta raquete direita representando Bitcoin. Dramatico.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T08</span><span class="title">Bate raquetes uma contra outra</span><span class="reel-tag">Reel 9</span><span class="dur">3s</span><span class="arrow">&#9654;</span></div><div class="take-body">5+ takes. SOM BOM — caprichar no audio. Impacto das raquetes.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T09</span><span class="title">Caminhada pela quadra explicando</span><span class="reel-tag">Reel 9</span><span class="reel-tag">Reel 19</span><span class="dur">12s</span><span class="arrow">&#9654;</span></div><div class="take-body">3 takes. Gimbal obrigatorio. Andre caminha pela quadra enquanto explica.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T10</span><span class="title">Smash</span><span class="reel-tag">Reel 9</span><span class="dur">3s</span><span class="arrow">&#9654;</span></div><div class="take-body">5+ takes. Low angle. Slow motion se possivel. Andre ja aquecido — gravar por ultimo.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T11</span><span class="title">Quique bola no chao</span><span class="reel-tag">Reel 13</span><span class="dur">4s</span><span class="arrow">&#9654;</span></div><div class="take-body">Bola quicando no chao da quadra. Close.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T12</span><span class="title">Rebatida leve + gesto vai e volta</span><span class="reel-tag">Reel 13</span><span class="dur">6s</span><span class="arrow">&#9654;</span></div><div class="take-body">Rebatida leve com gesto de vai e volta representando cambio.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T13</span><span class="title">Raquete apontada + tom serio</span><span class="reel-tag">Reel 13</span><span class="dur">12s</span><span class="arrow">&#9654;</span></div><div class="take-body">4-5 takes. Andre aponta raquete com tom serio. Plano medio.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T14</span><span class="title">Joga bola pra cima e rebate</span><span class="reel-tag">Reel 13</span><span class="dur">3s</span><span class="arrow">&#9654;</span></div><div class="take-body">8+ takes. Timing dificil — muitas repeticoes necessarias.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T15</span><span class="title">B-roll jogo real</span><span class="reel-tag">Reel 19</span><span class="dur">30s+</span><span class="arrow">&#9654;</span></div><div class="take-body">Bruto longo. Varios angulos. Gimbal. Jogo REAL de padel. Documentario esportivo.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T16</span><span class="title">Para de jogar e olha camera</span><span class="reel-tag">Reel 19</span><span class="dur">5s</span><span class="arrow">&#9654;</span></div><div class="take-body">Andre acabou de jogar DE VERDADE. Para e olha para camera. Autenticidade.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T17</span><span class="title">Gesto "bola pra fora"</span><span class="reel-tag">Reel 19</span><span class="dur">3s</span><span class="arrow">&#9654;</span></div><div class="take-body">Gesto indicando que a bola foi para fora.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T18</span><span class="title">Raquete levantada como trofeu, low angle</span><span class="reel-tag">Reel 19</span><span class="dur">3s</span><span class="arrow">&#9654;</span></div><div class="take-body">Low angle. Raquete levantada em gesto de vitoria.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T19</span><span class="title">Posicao jogo + sorriso + fala final</span><span class="reel-tag">Reel 19</span><span class="dur">4s</span><span class="arrow">&#9654;</span></div><div class="take-body">Andre em posicao de jogo, sorriso, fala final do Reel.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T20</span><span class="title">Rebatida suave e precisa</span><span class="reel-tag">Reel 19</span><span class="dur">3s</span><span class="arrow">&#9654;</span></div><div class="take-body">5+ takes. Rebatida controlada e precisa. Metafora do investidor paciente.</div></div>
+
+<h4 style="color:var(--blue);margin:16px 0 8px;font-size:0.85em">B-ROLL</h4>
+<div class="broll-list">
+<span class="broll-item">Close raquete (5s)</span><span class="broll-item">Close bola na mao (3s)</span><span class="broll-item">Bola quicando (3s)</span><span class="broll-item">Pes movimentando (5s)</span><span class="broll-item">Quadra vazia (5s)</span><span class="broll-item">Andre pequeno no centro (3s)</span><span class="broll-item">Vidro/grade desfocado (5s)</span><span class="broll-item">Pegando raquete (5s)</span><span class="broll-item">Rede close (3s)</span><span class="broll-item">Reflexo no vidro (5s)</span><span class="broll-item">Tomando agua (3s)</span><span class="broll-item">Mao girando raquete (3s)</span>
+</div>
+</div>
+</div>
+
+<!-- ACADEMIA -->
+<div class="location-block">
+<div class="location-header" onclick="toggleLoc(this)">
+<div><h2>Academia</h2><small style="color:var(--text2)">Reels 1, 8, 14, 17 — 10 takes</small></div>
+<div class="meta">60-90 min<br><span style="font-size:0.8em">Camiseta preta lisa + bermuda escura</span></div>
+</div>
+<div class="location-body">
+<div class="info-grid">
+<div class="info-box"><h4>Figurino</h4><p>Camiseta preta lisa + bermuda esportiva escura. Sem bone.</p></div>
+<div class="info-box"><h4>Iluminacao / Audio</h4><p>Iluminacao da academia. LED portatil para fill se necessario. Room tone 10s (maquinas de fundo).</p></div>
+<div class="info-box"><h4>Equipamento</h4><p>Gimbal + tripe. Halter 16kg+ para rosca. Spotter fora de quadro no supino.</p></div>
+</div>
+
+<h4 style="color:var(--accent);margin:12px 0 8px;font-size:0.85em">ORDEM DE FILMAGEM</h4>
+<ol class="order-list">
+<li>Room tone + B-roll geral academia</li>
+<li>Takes 6-7 — Esteira devagar + descendo (Reel 14)</li>
+<li>Take 4 — Supino, 4 angulos (Reel 8)</li>
+<li>Take 3 — Rosca biceps, 4 angulos (Reels 1, 17)</li>
+<li>Take 2 — Caminhada pela academia (Reels 1, 8, 17)</li>
+<li>Take 10 — Espelho, camera atras (Reel 1)</li>
+<li>Take 8 — Halter mais pesado (Reel 17)</li>
+<li>Take 5 — Sentado pos-serie (Reels 8, 17)</li>
+<li>Take 1 — Segurando halteres, parado (Reel 1)</li>
+<li>Take 9 — Close rosto fecho (TODOS — 4 versoes)</li>
+<li>B-roll restante</li>
+</ol>
+
+<h4 style="color:var(--accent);margin:16px 0 8px;font-size:0.85em">TAKES</h4>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T01</span><span class="title">Andre segurando halteres, parado</span><span class="reel-tag">Reel 1</span><span class="dur">15s</span><span class="arrow">&#9654;</span></div><div class="take-body">Close medio. Tripe. 3 takes. Andre parado segurando halteres.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T02</span><span class="title">Andre caminhando pela academia</span><span class="reel-tag">Reel 1</span><span class="reel-tag">Reel 8</span><span class="reel-tag">Reel 17</span><span class="dur">20s</span><span class="arrow">&#9654;</span></div><div class="take-body">Plano medio. Gimbal. 2 variacoes. Usado em 3 Reels.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T03</span><span class="title">Andre rosca biceps</span><span class="reel-tag">Reel 1</span><span class="reel-tag">Reel 17</span><span class="dur">15s/ang</span><span class="arrow">&#9654;</span></div><div class="take-body">4 angulos diferentes. Tripe + gimbal. Halter 16kg+. Caprichar nos angulos para ter opcoes na edicao.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T04</span><span class="title">Andre no supino</span><span class="reel-tag">Reel 8</span><span class="dur">20s/ang</span><span class="arrow">&#9654;</span></div><div class="take-body">4 angulos. 20s por angulo. Spotter fora de quadro. Reps reais.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T05</span><span class="title">Andre sentado pos-serie</span><span class="reel-tag">Reel 8</span><span class="reel-tag">Reel 17</span><span class="dur">20s</span><span class="arrow">&#9654;</span></div><div class="take-body">Close medio. Tripe. DEPOIS de series reais — suor e cansaco autenticos.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T06</span><span class="title">Andre na esteira devagar</span><span class="reel-tag">Reel 14</span><span class="dur">25s</span><span class="arrow">&#9654;</span></div><div class="take-body">Plano medio. Tripe. Velocidade MINIMA na esteira. Ironico — Brasil cresce devagar.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T07</span><span class="title">Andre descendo da esteira</span><span class="reel-tag">Reel 14</span><span class="dur">10s</span><span class="arrow">&#9654;</span></div><div class="take-body">Plano medio. Desce da esteira — metafora de parar de andar sem sair do lugar.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T08</span><span class="title">Andre pegando halter mais pesado</span><span class="reel-tag">Reel 17</span><span class="dur">12s</span><span class="arrow">&#9654;</span></div><div class="take-body">Plano medio. Gimbal. Progressao de carga — pega halter maior que o anterior.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T09</span><span class="title">Close no rosto fecho</span><span class="reel-tag">TODOS</span><span class="dur">15s x4</span><span class="arrow">&#9654;</span></div><div class="take-body">Close tight. Tripe. 4 versoes diferentes (uma para cada Reel da academia). Expressao seria e determinada.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T10</span><span class="title">Andre em frente ao espelho</span><span class="reel-tag">Reel 1</span><span class="dur">12s</span><span class="arrow">&#9654;</span></div><div class="take-body">Camera ATRAS de Andre. Evitar camera no reflexo do espelho. Composicao cuidadosa.</div></div>
+
+<h4 style="color:var(--blue);margin:16px 0 8px;font-size:0.85em">B-ROLL</h4>
+<div class="broll-list">
+<span class="broll-item">Close anilhas/pesos (5s)</span><span class="broll-item">Close maos halter (5s)</span><span class="broll-item">Close suor (5s)</span><span class="broll-item">Plano geral academia (5s)</span><span class="broll-item">Close painel esteira (5s)</span><span class="broll-item">Andre tomando agua (5s)</span><span class="broll-item">Close barra supino (5s)</span><span class="broll-item">Rack halteres (5s)</span><span class="broll-item">Espelho reflexo desfocado (5s)</span><span class="broll-item">Pes na esteira (5s)</span>
+</div>
+</div>
+</div>
+
+<!-- PISCINA -->
+<div class="location-block">
+<div class="location-header" onclick="toggleLoc(this)">
+<div><h2>Piscina</h2><small style="color:var(--text2)">Reels 3, 10, 15, 18 — 11 takes</small></div>
+<div class="meta">1h30-2h<br><span style="font-size:0.8em">Bermuda escura + camiseta neutra</span></div>
+</div>
+<div class="location-body">
+<div class="info-grid">
+<div class="info-box"><h4>Figurino</h4><p>Bermuda escura + camiseta/camisa leve neutra. Sem sunga. Sem oculos nos takes de fala.</p></div>
+<div class="info-box"><h4>Iluminacao</h4><p>LUZ NATURAL. Horario ideal: 7h-9h ou 15h30-17h. Golden hour para beauty shots.</p></div>
+<div class="info-box"><h4>Notas</h4><p>Agua PARADA antes dos takes 3 e 5. Esperar agua acalmar entre takes da pedra.</p></div>
+</div>
+
+<h4 style="color:var(--accent);margin:12px 0 8px;font-size:0.85em">ORDEM DE FILMAGEM</h4>
+<ol class="order-list">
+<li>Montar equipamento + B-roll agua parada</li>
+<li>Take 3 — Olhando agua contemplativo (agua imovel)</li>
+<li>Take 5 — Pedra na piscina MONEY SHOT</li>
+<li>B-roll ondas pos-pedra</li>
+<li>Takes 1, 2 — Borda pes na agua + close rosto</li>
+<li>Take 4 — De pe borda, 5 dedos (Reel 10)</li>
+<li>Takes 6, 7, 8 — Espreguicadeira + caminhada + mao na agua</li>
+<li>Takes 9, 10 — Andando ao redor + wide shot</li>
+<li>Take 11 — CTA apontando camera (TODOS)</li>
+<li>B-roll restante</li>
+</ol>
+
+<h4 style="color:var(--accent);margin:16px 0 8px;font-size:0.85em">TAKES</h4>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T01</span><span class="title">Andre borda, pes na agua</span><span class="reel-tag">Reel 3</span><span class="dur">30s</span><span class="arrow">&#9654;</span></div><div class="take-body">3 takes. Andre sentado na borda com pes na agua. Contemplativo.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T02</span><span class="title">Close rosto borda</span><span class="reel-tag">Reel 3</span><span class="reel-tag">Reel 15</span><span class="dur">20s</span><span class="arrow">&#9654;</span></div><div class="take-body">3 takes. Close no rosto de Andre na borda da piscina.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T03</span><span class="title">Andre olhando agua, contemplativo</span><span class="reel-tag">Reel 3</span><span class="reel-tag">Reel 10</span><span class="dur">10s</span><span class="arrow">&#9654;</span></div><div class="take-body">2 takes. AGUA PARADA obrigatorio. Gravar antes de qualquer perturbacao na agua.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T04</span><span class="title">Andre de pe borda, 5 dedos</span><span class="reel-tag">Reel 10</span><span class="dur">40s</span><span class="arrow">&#9654;</span></div><div class="take-body">3 takes. Andre mostra 5 dedos — 5 eventos de marco. Plano medio.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T05</span><span class="title">Andre jogando pedra na piscina</span><span class="reel-tag">Reel 10</span><span class="dur">10s</span><span class="arrow">&#9654;</span></div><div class="take-body"><strong style="color:var(--yellow)">MONEY SHOT.</strong> 5 takes. Esperar agua acalmar entre cada take. Capturar splash e ondas.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T06</span><span class="title">Andre recostado espreguicadeira</span><span class="reel-tag">Reel 15</span><span class="dur">20s</span><span class="arrow">&#9654;</span></div><div class="take-body">3 takes. Estilo lifestyle. Relaxado na espreguicadeira.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T07</span><span class="title">Andando espreguicadeira ate borda</span><span class="reel-tag">Reel 15</span><span class="dur">8s</span><span class="arrow">&#9654;</span></div><div class="take-body">2 takes. Gimbal. Transicao da espreguicadeira ate a borda da piscina.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T08</span><span class="title">Close mao tocando agua</span><span class="reel-tag">Reel 15</span><span class="reel-tag">Reel 18</span><span class="dur">5s</span><span class="arrow">&#9654;</span></div><div class="take-body">3 takes. Beauty shot. Close na mao tocando a superficie da agua.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T09</span><span class="title">Andre andando ao redor piscina</span><span class="reel-tag">Reel 18</span><span class="dur">30s</span><span class="arrow">&#9654;</span></div><div class="take-body">3 takes. Gimbal obrigatorio. Caminhada ao redor da piscina.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T10</span><span class="title">De pe olhando piscina cheia, wide shot</span><span class="reel-tag">Reel 18</span><span class="dur">8s</span><span class="arrow">&#9654;</span></div><div class="take-body">2 takes. Wide shot. Andre pequeno no quadro, piscina grande — metafora visual.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T11</span><span class="title">Andre apontando camera, CTA</span><span class="reel-tag">TODOS</span><span class="dur">5s x4</span><span class="arrow">&#9654;</span></div><div class="take-body">4 frases diferentes de CTA, 5s cada. Serve para todos os Reels da piscina.</div></div>
+
+<h4 style="color:var(--blue);margin:16px 0 8px;font-size:0.85em">B-ROLL</h4>
+<div class="broll-list">
+<span class="broll-item">Superficie agua parada (10s)</span><span class="broll-item">Ondas pos-pedra (15s)</span><span class="broll-item">Reflexo Andre na agua (5s)</span><span class="broll-item">Agua brilhando sol (5s)</span><span class="broll-item">Espreguicadeira vazia (5s)</span><span class="broll-item">Pes entrando agua (5s)</span><span class="broll-item">Andre de costas (5s)</span><span class="broll-item">Gotas/respingos slow motion (5s)</span><span class="broll-item">Panoramica piscina (8s)</span>
+</div>
+</div>
+</div>
+
+<!-- BRINQUEDOTECA -->
+<div class="location-block">
+<div class="location-header" onclick="toggleLoc(this)">
+<div><h2>Brinquedoteca</h2><small style="color:var(--text2)">Reels 2, 5, 12, 16 — ~29 takes</small></div>
+<div class="meta">~2h<br><span style="font-size:0.8em">Camiseta lisa escura (preta/cinza)</span></div>
+</div>
+<div class="location-body">
+<div class="info-grid">
+<div class="info-box"><h4>Figurino</h4><p>Camiseta lisa escura (preta ou cinza). Sem estampa — contraste com brinquedos coloridos.</p></div>
+<div class="info-box"><h4>Iluminacao</h4><p>LED portatil para fill no rosto. Iluminacao da sala como base.</p></div>
+<div class="info-box"><h4>Props</h4><p>50+ pecas coloridas, 15-20 blocos empilhaveis, 3-4 pecas especiais, 8-10 pecas mesma cor.</p></div>
+</div>
+
+<h4 style="color:var(--accent);margin:16px 0 8px;font-size:0.85em">REEL 2 — "So faltam 1 milhao de Bitcoins"</h4>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T01</span><span class="title">Sentado no chao, pecas a frente</span><span class="reel-tag">Reel 2</span><span class="dur">~8s</span><span class="arrow">&#9654;</span></div><div class="take-body">Plano medio. Andre sentado com pecas organizadas a frente.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T02</span><span class="title">Close rosto levantando sobrancelhas</span><span class="reel-tag">Reel 2</span><span class="dur">~5s</span><span class="arrow">&#9654;</span></div><div class="take-body">Close. Expressao de surpresa/curiosidade.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T03</span><span class="title">Pega 21 pecas e organiza</span><span class="reel-tag">Reel 2</span><span class="dur">~10s</span><span class="arrow">&#9654;</span></div><div class="take-body">Plano medio. Contando e organizando 21 pecas.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T04</span><span class="title">Top-down pecas separadas (20 vs 1)</span><span class="reel-tag">Reel 2</span><span class="dur">~8s</span><span class="arrow">&#9654;</span></div><div class="take-body">Plano de cima (top-down). 20 pecas de um lado, 1 isolada do outro.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T05</span><span class="title">Close peca isolada</span><span class="reel-tag">Reel 2</span><span class="dur">~5s</span><span class="arrow">&#9654;</span></div><div class="take-body">Close/detalhe. Zoom dramatico na peca isolada com vinheta.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T06</span><span class="title">Andre inclina pra frente, tom serio</span><span class="reel-tag">Reel 2</span><span class="dur">~8s</span><span class="arrow">&#9654;</span></div><div class="take-body">Bust shot. Tom serio sobre escassez.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T07</span><span class="title">Segura peca entre dois dedos</span><span class="reel-tag">Reel 2</span><span class="dur">~5s</span><span class="arrow">&#9654;</span></div><div class="take-body">Close mao. Peca entre polegar e indicador.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T08</span><span class="title">Coloca peca de volta, abre maos</span><span class="reel-tag">Reel 2</span><span class="dur">~5s</span><span class="arrow">&#9654;</span></div><div class="take-body">Plano medio. Gesto de "pense nisso".</div></div>
+
+<h4 style="color:var(--accent);margin:16px 0 8px;font-size:0.85em">REEL 5 — "38% das altcoins"</h4>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T09</span><span class="title">De pe olhando pecas caoticas no chao</span><span class="reel-tag">Reel 5</span><span class="dur">~6s</span><span class="arrow">&#9654;</span></div><div class="take-body">Plano medio. Pecas espalhadas caoticamente — representam altcoins.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T10</span><span class="title">Abaixa, passa mao por pecas</span><span class="reel-tag">Reel 5</span><span class="dur">~8s</span><span class="arrow">&#9654;</span></div><div class="take-body">Plano medio + top-down insert. Mao passando pelas pecas jogadas.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T11</span><span class="title">Pega peca aleatoria, joga de volta</span><span class="reel-tag">Reel 5</span><span class="dur">~5s</span><span class="arrow">&#9654;</span></div><div class="take-body">Plano medio. Desprezo — maioria nao vale nada.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T12</span><span class="title">Gesto de "esmagado"</span><span class="reel-tag">Reel 5</span><span class="dur">~5s</span><span class="arrow">&#9654;</span></div><div class="take-body">Bust shot. Andre faz gesto indicando que altcoins estao esmagadas.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T13</span><span class="title">Separa 3-4 pecas especiais do caos</span><span class="reel-tag">Reel 5</span><span class="dur">~8s</span><span class="arrow">&#9654;</span></div><div class="take-body">Plano medio + close maos. Seleciona pecas de cores fortes — as que vao subir.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T14</span><span class="title">Segura pecas selecionadas, olhar desafiador</span><span class="reel-tag">Reel 5</span><span class="dur">~6s</span><span class="arrow">&#9654;</span></div><div class="take-body">Plano medio-fechado. Olhar desafiador — "voce sabe escolher?"</div></div>
+
+<h4 style="color:var(--accent);margin:16px 0 8px;font-size:0.85em">REEL 12 — "Inflacao controlada"</h4>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T15</span><span class="title">Sentado, torre de blocos a frente</span><span class="reel-tag">Reel 12</span><span class="dur">~8s</span><span class="arrow">&#9654;</span></div><div class="take-body">Plano medio. Torre de 15-20 blocos representando poder de compra.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T16</span><span class="title">Close rosto sorriso ironico</span><span class="reel-tag">Reel 12</span><span class="dur">~5s</span><span class="arrow">&#9654;</span></div><div class="take-body">Close-up. Ironia sobre "inflacao controlada".</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T17</span><span class="title">Tira primeiro bloco</span><span class="reel-tag">Reel 12</span><span class="dur">~6s</span><span class="arrow">&#9654;</span></div><div class="take-body">Plano medio + close maos. Primeiro bloco removido = primeiro ano de inflacao.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T18</span><span class="title">Tira segundo e terceiro blocos</span><span class="reel-tag">Reel 12</span><span class="dur">~8s</span><span class="arrow">&#9654;</span></div><div class="take-body">Plano medio. Torre comeca a balancear. Ritmo crescente.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T19</span><span class="title">Tira quarto bloco, preocupacao</span><span class="reel-tag">Reel 12</span><span class="dur">~6s</span><span class="arrow">&#9654;</span></div><div class="take-body">Plano medio. Expressao de preocupacao — 85% do poder de compra perdido.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T20</span><span class="title">Hesita, tira bloco, TORRE CAI</span><span class="reel-tag">Reel 12</span><span class="dur">~8s</span><span class="arrow">&#9654;</span></div><div class="take-body"><strong style="color:var(--red)">MULTIPLOS TAKES!</strong> Slow motion. Trilha cessa. Capturar som real dos blocos caindo. SEM MUSICA neste momento.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T21</span><span class="title">Olha blocos caidos, depois camera</span><span class="reel-tag">Reel 12</span><span class="dur">~10s</span><span class="arrow">&#9654;</span></div><div class="take-body">Plano medio-fechado. SEM MUSICA. Olha blocos caidos, depois olha direto para camera. Sem cortes.</div></div>
+
+<h4 style="color:var(--accent);margin:16px 0 8px;font-size:0.85em">REEL 16 — "Investir e mais simples que LEGO"</h4>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T22</span><span class="title">No chao montando pecas</span><span class="reel-tag">Reel 16</span><span class="dur">~8s</span><span class="arrow">&#9654;</span></div><div class="take-body">Plano medio. Andre no chao montando pecas com entusiasmo.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T23</span><span class="title">Segura uma peca sozinha</span><span class="reel-tag">Reel 16</span><span class="dur">~4s</span><span class="arrow">&#9654;</span></div><div class="take-body">Close mao. Uma peca sozinha = nada.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T24</span><span class="title">Encaixa pecas, monta mini-estrutura</span><span class="reel-tag">Reel 16</span><span class="dur">~10s</span><span class="arrow">&#9654;</span></div><div class="take-body">Close maos + plano medio. Pecas diferentes = diversificacao.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T25</span><span class="title">Empilha pecas iguais, torre fina</span><span class="reel-tag">Reel 16</span><span class="dur">~8s</span><span class="arrow">&#9654;</span></div><div class="take-body">Plano medio + close. Torre instavel de pecas identicas — concentracao.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T26</span><span class="title">Da toque na torre, cai</span><span class="reel-tag">Reel 16</span><span class="dur">~5s</span><span class="arrow">&#9654;</span></div><div class="take-body"><strong style="color:var(--red)">MULTIPLOS TAKES!</strong> Close + slow motion. Torre de pecas iguais desabando.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T27</span><span class="title">Compara: estrutura de pe vs escombros</span><span class="reel-tag">Reel 16</span><span class="dur">~6s</span><span class="arrow">&#9654;</span></div><div class="take-body">Top-down. Split visual: diversificado em pe vs concentrado caido.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T28</span><span class="title">Olha camera, sorriso, frase final</span><span class="reel-tag">Reel 16</span><span class="dur">~6s</span><span class="arrow">&#9654;</span></div><div class="take-body">Plano medio. Sorriso confiante. "Se voce monta LEGO, voce investe."</div></div>
+
+<h4 style="color:var(--blue);margin:16px 0 8px;font-size:0.85em">B-ROLL</h4>
+<div class="broll-list">
+<span class="broll-item">Close pecas coloridas (5s)</span><span class="broll-item">Maos organizando pecas (5s)</span><span class="broll-item">Top-down mesa com pecas (5s)</span><span class="broll-item">Close encaixe de peca (3s)</span><span class="broll-item">Pecas espalhadas no chao (5s)</span><span class="broll-item">Torre de blocos close (5s)</span><span class="broll-item">Andre sentado wide (5s)</span><span class="broll-item">Brinquedoteca ambiente geral (5s)</span>
+</div>
+</div>
+</div>
+
+<!-- COWORKING -->
+<div class="location-block">
+<div class="location-header" onclick="toggleLoc(this)">
+<div><h2>Coworking</h2><small style="color:var(--text2)">Reels 4, 7, 11, 20 — 16 takes</small></div>
+<div class="meta">2h-2h30<br><span style="font-size:0.8em">Camisa social/polo escura</span></div>
+</div>
+<div class="location-body">
+<div class="info-grid">
+<div class="info-box"><h4>Figurino</h4><p>Camisa social slim (azul marinho ou preta) OU polo escura. Relogio opcional.</p></div>
+<div class="info-box"><h4>Iluminacao / Audio</h4><p>Iluminacao do coworking + LED portatil. Lapela wireless. Room tone antes.</p></div>
+<div class="info-box"><h4>Preparar Antes</h4><p>Slides no monitor: "18/03/2026", manchete Clarity Act, graficos TradingView. App exchange no celular.</p></div>
+</div>
+
+<h4 style="color:var(--accent);margin:12px 0 8px;font-size:0.85em">ORDEM DE FILMAGEM</h4>
+<ol class="order-list">
+<li>Preparar slides no monitor</li>
+<li>B-roll coworking vazio</li>
+<li>Takes 1-4 — Fed/Powell (Reel 4)</li>
+<li>Takes 5-7 — Clarity Act (Reel 7)</li>
+<li>Takes 8-11 — Selic/calculadora (Reel 11)</li>
+<li>Takes 12-16 — Escritorio do futuro (Reel 20)</li>
+<li>B-roll restante</li>
+</ol>
+
+<h4 style="color:var(--accent);margin:16px 0 8px;font-size:0.85em">TAKES</h4>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T01</span><span class="title">Sentado, olhar fixo, serio</span><span class="reel-tag">Reel 4</span><span class="dur">15s</span><span class="arrow">&#9654;</span></div><div class="take-body">Medium shot. Fixa. Andre serio olhando para camera — suspense Fed.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T02</span><span class="title">Vira tela do monitor "18/03"</span><span class="reel-tag">Reel 4</span><span class="dur">10s</span><span class="arrow">&#9654;</span></div><div class="take-body">Medium shot + monitor. Slide com "18/03/2026" visivel na tela.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T03</span><span class="title">Inclinado pra frente, segredo</span><span class="reel-tag">Reel 4</span><span class="dur">8s</span><span class="arrow">&#9654;</span></div><div class="take-body">Medium close-up. Tom de confidencia — "marca essa data".</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T04</span><span class="title">Aponta pra camera</span><span class="reel-tag">Reel 4</span><span class="dur">10s</span><span class="arrow">&#9654;</span></div><div class="take-body">Medium shot. Generico — pode usar em varios CTAs.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T05</span><span class="title">Serio, mao levantada</span><span class="reel-tag">Reel 7</span><span class="dur">15s</span><span class="arrow">&#9654;</span></div><div class="take-body">Medium shot. Tom serio sobre regulamentacao cripto.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T06</span><span class="title">Aponta pra tela manchete Clarity Act</span><span class="reel-tag">Reel 7</span><span class="dur">10s</span><span class="arrow">&#9654;</span></div><div class="take-body">Medium shot + monitor. Manchete do Clarity Act visivel na tela.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T07</span><span class="title">Gesticulando intenso</span><span class="reel-tag">Reel 7</span><span class="dur">12s</span><span class="arrow">&#9654;</span></div><div class="take-body">Medium close-up. Gesticulacao enfatica sobre impacto da lei.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T08</span><span class="title">Com calculadora, didatico</span><span class="reel-tag">Reel 11</span><span class="dur">15s</span><span class="arrow">&#9654;</span></div><div class="take-body">Medium shot. Andre segura calculadora e explica conta da Selic.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T09</span><span class="title">Insert calculadora close-up</span><span class="reel-tag">Reel 11</span><span class="dur">10s</span><span class="arrow">&#9654;</span></div><div class="take-body">Close-up maos/visor. Top-down. Numeros visiveis na calculadora.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T10</span><span class="title">Larga calculadora, olhar firme</span><span class="reel-tag">Reel 11</span><span class="dur">8s</span><span class="arrow">&#9654;</span></div><div class="take-body">Medium close-up. Larga calculadora com determinacao — "reposicione agora".</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T11</span><span class="title">Maos abertas, migracao</span><span class="reel-tag">Reel 11</span><span class="dur">10s</span><span class="arrow">&#9654;</span></div><div class="take-body">Medium shot. Gesto amplo de maos abertas — dinheiro migrando de renda fixa.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T12</span><span class="title">No notebook, descontraido</span><span class="reel-tag">Reel 20</span><span class="dur">10s</span><span class="arrow">&#9654;</span></div><div class="take-body">Medium shot. Dolly-in ou gimbal. Andre trabalhando no notebook.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T13</span><span class="title">Abre bracos, reveal coworking</span><span class="reel-tag">Reel 20</span><span class="dur">6s</span><span class="arrow">&#9654;</span></div><div class="take-body">Medium-wide. Pan/tilt gimbal. "Uma mesa, um notebook, Wi-Fi."</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T14</span><span class="title">Mostra tela celular</span><span class="reel-tag">Reel 20</span><span class="dur">10s</span><span class="arrow">&#9654;</span></div><div class="take-body">Medium close-up. App de exchange aberto — 3 toques pra comprar Bitcoin.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T15</span><span class="title">Se levanta, tom amplo</span><span class="reel-tag">Reel 20</span><span class="dur">8s</span><span class="arrow">&#9654;</span></div><div class="take-body">Medium → em pe. Tilt up. Movimento de autoridade.</div></div>
+
+<div class="take-card"><div class="take-head" onclick="toggleTake(this)"><span class="num">T16</span><span class="title">Aponta pra camera com sorriso</span><span class="reel-tag">Reel 20</span><span class="dur">5s</span><span class="arrow">&#9654;</span></div><div class="take-body">Medium close-up. CTA generico com sorriso — "me segue".</div></div>
+
+<h4 style="color:var(--blue);margin:16px 0 8px;font-size:0.85em">B-ROLL</h4>
+<div class="broll-list">
+<span class="broll-item">Tela monitor graficos (15s)</span><span class="broll-item">Maos digitando (10s top-down)</span><span class="broll-item">Tela celular app (10s close)</span><span class="broll-item">Coworking vazio (10s dolly/pan)</span><span class="broll-item">Cafe na mesa (5s)</span><span class="broll-item">Andre andando (8s gimbal)</span><span class="broll-item">Reflexo no monitor (5s)</span><span class="broll-item">Calculadora numeros (5s)</span><span class="broll-item">Plano geral (8s)</span>
+</div>
+</div>
+</div>
+
+</div><!-- end view-videomaker -->
+
+<!-- ==================== TAB 2: EDITOR ==================== -->
+<div class="view" id="view-editor">
+
+<p style="color:var(--text2);margin-bottom:16px;font-size:0.9em">Organizado por numero do Reel. Clique para expandir instrucoes de edicao.</p>
+
+<!-- REEL 1 -->
+<div class="reel-card"><div class="reel-head" onclick="toggleReel(this)"><h3><span class="rnum">01</span>O Bitcoin caiu 52%. E agora?</h3><div class="rmeta"><span class="loc-tag">Academia</span><span class="dur-tag">45s</span></div></div>
+<div class="reel-body">
+<div class="edit-general">Trilha tensa/motivacional, grave, batida lenta que cresce. Cor escuro, contraste alto, tons frios, dessaturacao leve. Legendas: Montserrat Black, branco com sombra, keywords amarelo/verde (52%, satoshi, 87%, 44).</div>
+<div class="edit-section"><h4>Timeline</h4><div class="timeline">
+<span class="ts">[0:00-0:03]</span> <span class="act">HOOK P1: Close rosto halteres, zoom-in 105%→110%, shake. Texto: "EU PERDI METADE DO MEU PATRIMONIO EM 4 MESES."</span><br>
+<span class="ts">[0:03-0:05]</span> <span class="act">HOOK P2: Solta halteres, corte seco, zoom punch 110%→120%, screen shake 3f. Texto: "E NAO VENDI UM UNICO SATOSHI." Efeito: Boom + halter.</span><br>
+<span class="ts">[0:05-0:12]</span> <span class="act">DADOS: Caminhando, grafico BTC ATH→$60k→$72k. Texto: "-52% DA ATH" (vermelho) → "VOLTANDO: $72K" (verde)</span><br>
+<span class="ts">[0:12-0:20]</span> <span class="act">LTH: Espelho, numero "87%" com contagem 0→87%. Texto: "LTH REDUZIRAM VENDA EM 87%". Ding.</span><br>
+<span class="ts">[0:20-0:30]</span> <span class="act">METAFORA: Rosca biceps, cortes rapidos, slow motion 50%. Texto: "AGUENTAR O PESO DO MERCADO = AGUENTAR O PESO NA ACADEMIA"</span><br>
+<span class="ts">[0:30-0:37]</span> <span class="act">RSI: Solta halter, mini grafico RSI. Texto: "RSI: 44 → ZONA NEUTRA"</span><br>
+<span class="ts">[0:37-0:45]</span> <span class="act">CTA: Apontando camera, zoom in, corte preto. Texto: "VOCE VAI ESTAR POSICIONADO?" Boom final.</span>
+</div></div>
+<div class="edit-section"><h4>Assets</h4><div class="assets-list"><span class="asset-tag">Grafico BTC/USD</span><span class="asset-tag">Numero 87% animado</span><span class="asset-tag">Mini grafico RSI</span></div></div>
+<div class="edit-section"><h4>SFX</h4><div class="sfx-list"><span class="sfx-tag">0:00 reverb+flash</span><span class="sfx-tag">0:03 boom+shake</span><span class="sfx-tag">0:12 ding</span><span class="sfx-tag">0:22 slow mo audio</span><span class="sfx-tag">0:44 boom final</span></div></div>
+<div class="edit-section"><h4>Checklist Pre-Publicacao</h4><ul class="checklist"><li>Primeiro 1,3s tem corte/zoom que prende atencao?</li><li>Legendas corretas? (termos cripto e numeros)</li><li>Numeros-chave destacados visualmente?</li><li>Audio limpo?</li><li>Musica nao compete com a voz? (ducking)</li><li>Video faz sentido COM som desligado?</li><li>CTA final claro?</li><li>Duracao dentro do alvo (45s)?</li></ul></div>
+</div></div>
+
+<!-- REEL 2 -->
+<div class="reel-card"><div class="reel-head" onclick="toggleReel(this)"><h3><span class="rnum">02</span>So faltam 1 milhao de Bitcoins</h3><div class="rmeta"><span class="loc-tag">Brinquedoteca</span><span class="dur-tag">45s</span></div></div>
+<div class="reel-body">
+<div class="edit-general">Lo-fi suave, curiosa, discovery mood. Vol 15-20%. Cor: saturacao +10-15%, skin tones naturais, temp quente. Legendas: Montserrat Bold, branco/sombra, keywords amarelo/verde: 21, 20 milhoes, 1 milhao, 95%, 2140, escasso, limitado.</div>
+<div class="edit-section"><h4>Timeline</h4><div class="timeline">
+<span class="ts">[0:00-0:03]</span> <span class="act">HOOK: Sentado, pecas, zoom in 105%→110%. Texto: "21 BOLAS DE GUDE" pop-up bounce.</span><br>
+<span class="ts">[0:03-0:05]</span> <span class="act">PAUSA: Close rosto sobrancelhas, bust shot. Texto: "Quanto valeria cada uma?"</span><br>
+<span class="ts">[0:05-0:12]</span> <span class="act">EXPLICACAO: Pega 21 pecas, plano medio + insert maos. Texto: "BITCOIN = 21 MILHOES". Animacao "21.000.000" digitando. SFX: click/snap.</span><br>
+<span class="ts">[0:12-0:18]</span> <span class="act">SEPARACAO: Top-down, 20 vs 1. Texto: barra progresso "20M de 21M" 95%. SFX: swoosh.</span><br>
+<span class="ts">[0:18-0:24]</span> <span class="act">PECA: Close peca isolada, zoom dramatico, vinheta. Texto: "MENOS DE 1 MILHAO" (vermelho pulsando). SFX: boom.</span><br>
+<span class="ts">[0:24-0:30]</span> <span class="act">95%: Inclinado, push-in. Texto: "95% JA FOI CRIADO" punch/scale-up + grafico circular.</span><br>
+<span class="ts">[0:30-0:37]</span> <span class="act">2140: Peca entre dedos, close mao insert. Texto: "Ultimo BTC: ano 2140" futurista + timeline.</span><br>
+<span class="ts">[0:37-0:45]</span> <span class="act">CTA: Coloca peca, zoom out. Texto: "ESCASSEZ = VALOR?" letra por letra.</span>
+</div></div>
+<div class="edit-section"><h4>Assets</h4><div class="assets-list"><span class="asset-tag">21 pecas</span><span class="asset-tag">Barra 95%</span><span class="asset-tag">Pizza 95%</span><span class="asset-tag">Timeline 2024-2140</span></div></div>
+<div class="edit-section"><h4>SFX</h4><div class="sfx-list"><span class="sfx-tag">0:05 click</span><span class="sfx-tag">0:12 swoosh</span><span class="sfx-tag">0:18 boom</span><span class="sfx-tag">0:24 whoosh</span><span class="sfx-tag">0:37 chime</span></div></div>
+<div class="edit-section"><h4>Checklist Pre-Publicacao</h4><ul class="checklist"><li>Primeiro 1,3s tem corte/zoom que prende atencao?</li><li>Legendas corretas? (termos cripto e numeros)</li><li>Numeros-chave destacados visualmente?</li><li>Audio limpo?</li><li>Musica nao compete com a voz? (ducking)</li><li>Video faz sentido COM som desligado?</li><li>CTA final claro?</li><li>Duracao dentro do alvo (45s)?</li></ul></div>
+</div></div>
+
+<!-- REEL 3 -->
+<div class="reel-card"><div class="reel-head" onclick="toggleReel(this)"><h3><span class="rnum">03</span>As baleias pararam de vender</h3><div class="rmeta"><span class="loc-tag">Piscina</span><span class="dur-tag">45s</span></div></div>
+<div class="reel-body">
+<div class="edit-general">Trilha lo-fi sombrio "deep ocean". Grade teal cinematografico.</div>
+<div class="edit-section"><h4>Timeline</h4><div class="timeline">
+<span class="ts">[0:00-0:03]</span> <span class="act">Zoom in 105% + boom grave.</span><br>
+<span class="ts">[0:03-0:08]</span> <span class="act">Close rosto + ticker "-87%" + barra 250k→32k.</span><br>
+<span class="ts">[0:08-0:14]</span> <span class="act">Split grafico on-chain LTH (Glassnode).</span><br>
+<span class="ts">[0:14-0:22]</span> <span class="act">B-roll baleia subaquatica (Pexels) + som bolhas.</span><br>
+<span class="ts">[0:22-0:28]</span> <span class="act">Slow motion agua parada + "ELAS PARARAM." + silencio trilha 1s.</span><br>
+<span class="ts">[0:28-0:38]</span> <span class="act">Zoom progressivo 100%→115% + "QUEM TA ERRADO?".</span><br>
+<span class="ts">[0:38-0:45]</span> <span class="act">CTA.</span>
+</div></div>
+<div class="edit-section"><h4>Assets</h4><div class="assets-list"><span class="asset-tag">Grafico vendas LTH (Glassnode)</span><span class="asset-tag">B-roll baleia (Pexels)</span><span class="asset-tag">B-roll agua parada</span></div></div>
+<div class="edit-section"><h4>Checklist Pre-Publicacao</h4><ul class="checklist"><li>Primeiro 1,3s tem corte/zoom que prende atencao?</li><li>Legendas corretas? (termos cripto e numeros)</li><li>Numeros-chave destacados visualmente?</li><li>Audio limpo?</li><li>Musica nao compete com a voz? (ducking)</li><li>Video faz sentido COM som desligado?</li><li>CTA final claro?</li><li>Duracao dentro do alvo (45s)?</li></ul></div>
+</div></div>
+
+<!-- REEL 4 -->
+<div class="reel-card"><div class="reel-head" onclick="toggleReel(this)"><h3><span class="rnum">04</span>O Fed decide o futuro do seu dinheiro dia 18</h3><div class="rmeta"><span class="loc-tag">Coworking</span><span class="dur-tag">45s</span></div></div>
+<div class="reel-body">
+<div class="edit-general">Trilha suspense Bloomberg. Grade frio/azulado.</div>
+<div class="edit-section"><h4>Timeline</h4><div class="timeline">
+<span class="ts">[0:00-0:03]</span> <span class="act">"DIA 18" glitch vermelho.</span><br>
+<span class="ts">[0:03-0:08]</span> <span class="act">Cut-away foto Powell + lower third.</span><br>
+<span class="ts">[0:08-0:14]</span> <span class="act">Split grafico Fed Funds Rate.</span><br>
+<span class="ts">[0:14-0:20]</span> <span class="act">Zoom na tela monitor.</span><br>
+<span class="ts">[0:20-0:28]</span> <span class="act">Grafico BTC+S&P500 + tick relogio.</span><br>
+<span class="ts">[0:28-0:35]</span> <span class="act">"18 DE MARCO" fixo.</span><br>
+<span class="ts">[0:35-0:42]</span> <span class="act">Zoom in + flash branco.</span><br>
+<span class="ts">[0:42-0:45]</span> <span class="act">CTA.</span>
+</div></div>
+<div class="edit-section"><h4>Assets</h4><div class="assets-list"><span class="asset-tag">Foto Powell</span><span class="asset-tag">Grafico Fed Funds Rate (CME FedWatch)</span><span class="asset-tag">Slide "18/03/2026" no monitor</span><span class="asset-tag">Motion graphics BTC+S&P500</span></div></div>
+<div class="edit-section"><h4>Checklist Pre-Publicacao</h4><ul class="checklist"><li>Primeiro 1,3s tem corte/zoom que prende atencao?</li><li>Legendas corretas? (termos cripto e numeros)</li><li>Numeros-chave destacados visualmente?</li><li>Audio limpo?</li><li>Musica nao compete com a voz? (ducking)</li><li>Video faz sentido COM som desligado?</li><li>CTA final claro?</li><li>Duracao dentro do alvo (45s)?</li></ul></div>
+</div></div>
+
+<!-- REEL 5 -->
+<div class="reel-card"><div class="reel-head" onclick="toggleReel(this)"><h3><span class="rnum">05</span>38% das altcoins estao no menor preco do ciclo</h3><div class="rmeta"><span class="loc-tag">Brinquedoteca</span><span class="dur-tag">45s</span></div></div>
+<div class="reel-body">
+<div class="edit-general">Beat lo-fi tensao. Vol 15-20%. Cor: saturacao +15%, contraste medio-alto, temp neutra. Legendas: Montserrat Bold, keywords amarelo/vermelho: R$1.000, R$50.000, 38%, menor preco, fortuna, escolher.</div>
+<div class="edit-section"><h4>Timeline</h4><div class="timeline">
+<span class="ts">[0:00-0:04]</span> <span class="act">HOOK: De pe, caos pecas, zoom 105%→112%. Texto: "R$1.000 → R$50.000" slot machine. SFX: cash register.</span><br>
+<span class="ts">[0:04-0:06]</span> <span class="act">FREIO: Dedo levantado, close. Texto: "Calma."</span><br>
+<span class="ts">[0:06-0:13]</span> <span class="act">PECAS CHAO: Abaixa, top-down insert. Texto: "Ninguem quer."</span><br>
+<span class="ts">[0:13-0:19]</span> <span class="act">38%: Pega peca, joga. Texto: "38% DAS ALTCOINS" vermelho pulsando. SFX: thud.</span><br>
+<span class="ts">[0:19-0:25]</span> <span class="act">BTC vs ALTS: Split BTC subindo vs alts caindo. Texto: "BTC firme ↑ / Alts no chao ↓". SFX: swoosh.</span><br>
+<span class="ts">[0:25-0:32]</span> <span class="act">SELECAO: Separa pecas especiais. Texto: "Capital BTC → Altcoins" seta animada.</span><br>
+<span class="ts">[0:32-0:39]</span> <span class="act">RESULTADO: Segura pecas, olhar. Texto: "Algumas = fortuna" (verde) / "A maioria = chao" (vermelho).</span><br>
+<span class="ts">[0:39-0:45]</span> <span class="act">CTA: Zoom in. Texto: "OPORTUNIDADE SEM CRITERIO = APOSTA" letra por letra.</span>
+</div></div>
+<div class="edit-section"><h4>Assets</h4><div class="assets-list"><span class="asset-tag">30+ pecas</span><span class="asset-tag">3-4 especiais</span><span class="asset-tag">Split BTC vs alts</span><span class="asset-tag">Seta animada</span><span class="asset-tag">Contagem R$1k→R$50k</span></div></div>
+<div class="edit-section"><h4>SFX</h4><div class="sfx-list"><span class="sfx-tag">0:00 cash register</span><span class="sfx-tag">0:13 thud</span><span class="sfx-tag">0:19 swoosh</span><span class="sfx-tag">0:32 chime duplo</span><span class="sfx-tag">0:39 tom grave</span></div></div>
+<div class="edit-section"><h4>Checklist Pre-Publicacao</h4><ul class="checklist"><li>Primeiro 1,3s tem corte/zoom que prende atencao?</li><li>Legendas corretas? (termos cripto e numeros)</li><li>Numeros-chave destacados visualmente?</li><li>Audio limpo?</li><li>Musica nao compete com a voz? (ducking)</li><li>Video faz sentido COM som desligado?</li><li>CTA final claro?</li><li>Duracao dentro do alvo (45s)?</li></ul></div>
+</div></div>
+
+<!-- REEL 6 -->
+<div class="reel-card"><div class="reel-head" onclick="toggleReel(this)"><h3><span class="rnum">06</span>Bitcoin e S&P 500: grudados</h3><div class="rmeta"><span class="loc-tag">Padel</span><span class="dur-tag">45s</span></div></div>
+<div class="reel-body">
+<div class="edit-general">Trilha lo-fi tensa. Grade frio.</div>
+<div class="edit-section"><h4>Timeline</h4><div class="timeline">
+<span class="ts">[0:00-0:03]</span> <span class="act">"BITCOIN E BOLSA: GRUDADOS" + zoom in.</span><br>
+<span class="ts">[0:04-0:12]</span> <span class="act">Grafico BTC (laranja) + S&P500 (azul) sobrepostas + "CORRELACAO 0.55".</span><br>
+<span class="ts">[0:12-0:20]</span> <span class="act">Flash + "PADEL = JOGO DE DUPLA" + check/X.</span><br>
+<span class="ts">[0:20-0:27]</span> <span class="act">Slow motion rebatida + "DOLAR FORTE PRESSIONA OS DOIS".</span><br>
+<span class="ts">[0:27-0:35]</span> <span class="act">Zoom in sem texto.</span><br>
+<span class="ts">[0:35-0:43]</span> <span class="act">"MESMO LADO DA REDE".</span><br>
+<span class="ts">[0:43-0:45]</span> <span class="act">Slow motion rebatida final + fade.</span>
+</div></div>
+<div class="edit-section"><h4>Assets</h4><div class="assets-list"><span class="asset-tag">Grafico correlacao BTC x S&P500</span><span class="asset-tag">Icones check/X</span></div></div>
+<div class="edit-section"><h4>Checklist Pre-Publicacao</h4><ul class="checklist"><li>Primeiro 1,3s tem corte/zoom que prende atencao?</li><li>Legendas corretas? (termos cripto e numeros)</li><li>Numeros-chave destacados visualmente?</li><li>Audio limpo?</li><li>Musica nao compete com a voz? (ducking)</li><li>Video faz sentido COM som desligado?</li><li>CTA final claro?</li><li>Duracao dentro do alvo (45s)?</li></ul></div>
+</div></div>
+
+<!-- REEL 7 -->
+<div class="reel-card"><div class="reel-head" onclick="toggleReel(this)"><h3><span class="rnum">07</span>Uma lei pode mudar tudo no mercado cripto</h3><div class="rmeta"><span class="loc-tag">Coworking</span><span class="dur-tag">45s</span></div></div>
+<div class="reel-body">
+<div class="edit-general">Trilha tensao politica. Grade frio/esverdeado.</div>
+<div class="edit-section"><h4>Timeline</h4><div class="timeline">
+<span class="ts">[0:00-0:03]</span> <span class="act">"UMA LEI PODE MUDAR TUDO" glitch + martelo juiz.</span><br>
+<span class="ts">[0:03-0:08]</span> <span class="act">"CLARITY ACT" destaque.</span><br>
+<span class="ts">[0:08-0:16]</span> <span class="act">Split "COMMODITY" (verde) vs "VALOR MOBILIARIO" (vermelho).</span><br>
+<span class="ts">[0:16-0:20]</span> <span class="act">Snap zoom "TUDO".</span><br>
+<span class="ts">[0:20-0:26]</span> <span class="act">Zoom tela + Capitol Building.</span><br>
+<span class="ts">[0:26-0:34]</span> <span class="act">Logos altcoins com "?".</span><br>
+<span class="ts">[0:34-0:40]</span> <span class="act">"NOTICIA MAIS IMPORTANTE" amarelo.</span><br>
+<span class="ts">[0:40-0:45]</span> <span class="act">CTA.</span>
+</div></div>
+<div class="edit-section"><h4>Assets</h4><div class="assets-list"><span class="asset-tag">Capitol Building</span><span class="asset-tag">Logos Solana/Cardano/XRP</span><span class="asset-tag">Logo SEC</span><span class="asset-tag">Manchete Clarity Act</span></div></div>
+<div class="edit-section"><h4>Checklist Pre-Publicacao</h4><ul class="checklist"><li>Primeiro 1,3s tem corte/zoom que prende atencao?</li><li>Legendas corretas? (termos cripto e numeros)</li><li>Numeros-chave destacados visualmente?</li><li>Audio limpo?</li><li>Musica nao compete com a voz? (ducking)</li><li>Video faz sentido COM som desligado?</li><li>CTA final claro?</li><li>Duracao dentro do alvo (45s)?</li></ul></div>
+</div></div>
+
+<!-- REEL 8 -->
+<div class="reel-card"><div class="reel-head" onclick="toggleReel(this)"><h3><span class="rnum">08</span>DCA: a estrategia mais chata e mais lucrativa</h3><div class="rmeta"><span class="loc-tag">Academia</span><span class="dur-tag">45s</span></div></div>
+<div class="reel-body">
+<div class="edit-general">Instrumental ritmico repetitivo, lo-fi beat. Tons quentes, contraste medio-alto. Keywords verde: DCA, aportes regulares, acumulando.</div>
+<div class="edit-section"><h4>Timeline</h4><div class="timeline">
+<span class="ts">[0:00-0:04]</span> <span class="act">HOOK: Sentado supino, zoom 102%→108%. Texto: "A ESTRATEGIA MAIS CHATA E MAIS LUCRATIVA"</span><br>
+<span class="ts">[0:04-0:10]</span> <span class="act">DCA: Posicionando pesos. "DCA" grande verde → "APORTES REGULARES" + seta loop.</span><br>
+<span class="ts">[0:10-0:20]</span> <span class="act">REPS: Supino 3 reps. Cada rep = corte: "APORTE 1" $100, "APORTE 2" $200, "APORTE 3" $300. Barra progresso + cha-ching.</span><br>
+<span class="ts">[0:20-0:28]</span> <span class="act">RESULTADO: Grafico "DCA desde ATH" (verde) vs "Esperou o fundo" (vermelho). Texto: "PRECO MEDIO < QUEM TENTOU ACERTAR O FUNDO"</span><br>
+<span class="ts">[0:28-0:37]</span> <span class="act">METAFORA: Zoom 100%→112%. "DCA E REPETICAO" → "IGUAL TREINO" → "TODA SEMANA" → "SEM PARAR"</span><br>
+<span class="ts">[0:37-0:45]</span> <span class="act">CTA: Close, corte preto. "VOCE TA ACUMULANDO OU ESPERANDO?"</span>
+</div></div>
+<div class="edit-section"><h4>Assets</h4><div class="assets-list"><span class="asset-tag">Icone loop</span><span class="asset-tag">Grafico DCA vs Lump Sum</span><span class="asset-tag">Contador aportes</span><span class="asset-tag">Barra progresso</span></div></div>
+<div class="edit-section"><h4>SFX</h4><div class="sfx-list"><span class="sfx-tag">0:06 metalico</span><span class="sfx-tag">0:11/0:14/0:17 cha-ching</span><span class="sfx-tag">0:20 whoosh</span><span class="sfx-tag">0:44 boom</span></div></div>
+<div class="edit-section"><h4>Checklist Pre-Publicacao</h4><ul class="checklist"><li>Primeiro 1,3s tem corte/zoom que prende atencao?</li><li>Legendas corretas? (termos cripto e numeros)</li><li>Numeros-chave destacados visualmente?</li><li>Audio limpo?</li><li>Musica nao compete com a voz? (ducking)</li><li>Video faz sentido COM som desligado?</li><li>CTA final claro?</li><li>Duracao dentro do alvo (45s)?</li></ul></div>
+</div></div>
+
+<!-- REEL 9 -->
+<div class="reel-card"><div class="reel-head" onclick="toggleReel(this)"><h3><span class="rnum">09</span>Bitcoin vs Ouro: quem vence?</h3><div class="rmeta"><span class="loc-tag">Padel</span><span class="dur-tag">45s</span></div></div>
+<div class="reel-body">
+<div class="edit-general">Trilha epica/UFC. Grade dourado↔frio/laranja.</div>
+<div class="edit-section"><h4>Timeline</h4><div class="timeline">
+<span class="ts">[0:00-0:04]</span> <span class="act">"BITCOIN vs OURO" versus + low angle.</span><br>
+<span class="ts">[0:04-0:10]</span> <span class="act">Dourado + "OURO — 5.000 ANOS" + overlay barra ouro.</span><br>
+<span class="ts">[0:10-0:16]</span> <span class="act">Frio/laranja + "BITCOIN — 17 ANOS" + icone BTC.</span><br>
+<span class="ts">[0:16-0:19]</span> <span class="act">Slow motion batida raquetes + sino ringue + flash.</span><br>
+<span class="ts">[0:19-0:30]</span> <span class="act">Grafico ratio BTC/Ouro minima 2 anos + "BARATO".</span><br>
+<span class="ts">[0:30-0:37]</span> <span class="act">Split "DEFESA x ATAQUE" + "JOGA COM OS DOIS".</span><br>
+<span class="ts">[0:37-0:42]</span> <span class="act">Slow motion smash + "PROXIMOS 10 ANOS" + BTC.</span><br>
+<span class="ts">[0:42-0:45]</span> <span class="act">Fade black.</span>
+</div></div>
+<div class="edit-section"><h4>Assets</h4><div class="assets-list"><span class="asset-tag">Grafico ratio BTC/Ouro</span><span class="asset-tag">Arte VS UFC</span><span class="asset-tag">Icones ouro e BTC</span></div></div>
+<div class="edit-section"><h4>Checklist Pre-Publicacao</h4><ul class="checklist"><li>Primeiro 1,3s tem corte/zoom que prende atencao?</li><li>Legendas corretas? (termos cripto e numeros)</li><li>Numeros-chave destacados visualmente?</li><li>Audio limpo?</li><li>Musica nao compete com a voz? (ducking)</li><li>Video faz sentido COM som desligado?</li><li>CTA final claro?</li><li>Duracao dentro do alvo (45s)?</li></ul></div>
+</div></div>
+
+<!-- REEL 10 -->
+<div class="reel-card"><div class="reel-head" onclick="toggleReel(this)"><h3><span class="rnum">10</span>Marco pode ser o mes que muda tudo</h3><div class="rmeta"><span class="loc-tag">Piscina</span><span class="dur-tag">60s</span></div></div>
+<div class="reel-body">
+<div class="edit-general">Trilha build-up epico (piano→synth). Grade golden hour. Counter "1/5"→"5/5".</div>
+<div class="edit-section"><h4>Timeline</h4><div class="timeline">
+<span class="ts">[0:00-0:04]</span> <span class="act">"5 EVENTOS" pulse + boom.</span><br>
+<span class="ts">[0:05-0:12]</span> <span class="act">Evento 1: calendario "18 MARCO" + logo Fed.</span><br>
+<span class="ts">[0:12-0:20]</span> <span class="act">Evento 2: manchete Clarity Act.</span><br>
+<span class="ts">[0:20-0:28]</span> <span class="act">Evento 3: logos Summit events.</span><br>
+<span class="ts">[0:28-0:36]</span> <span class="act">Evento 4: barra supply 20M/21M + "PRA SEMPRE" shake.</span><br>
+<span class="ts">[0:36-0:38]</span> <span class="act">Slow motion olhar agua.</span><br>
+<span class="ts">[0:38-0:45]</span> <span class="act">"PARARAM DE VENDER".</span><br>
+<span class="ts">[0:45-0:50]</span> <span class="act">Slow motion pedra na agua, splash amplificado, drop trilha. MONEY SHOT.</span><br>
+<span class="ts">[0:50-0:56]</span> <span class="act">Zoom 100%→120% + grafico LTH.</span><br>
+<span class="ts">[0:56-1:00]</span> <span class="act">CTA "MARCO".</span>
+</div></div>
+<div class="edit-section"><h4>Assets</h4><div class="assets-list"><span class="asset-tag">Logo Fed</span><span class="asset-tag">Clarity Act</span><span class="asset-tag">Logos Summit</span><span class="asset-tag">Grafico supply BTC</span><span class="asset-tag">Grafico LTH</span><span class="asset-tag">Counter animado</span><span class="asset-tag">Pedra</span></div></div>
+<div class="edit-section"><h4>Checklist Pre-Publicacao</h4><ul class="checklist"><li>Primeiro 1,3s tem corte/zoom que prende atencao?</li><li>Legendas corretas? (termos cripto e numeros)</li><li>Numeros-chave destacados visualmente?</li><li>Audio limpo?</li><li>Musica nao compete com a voz? (ducking)</li><li>Video faz sentido COM som desligado?</li><li>CTA final claro?</li><li>Duracao dentro do alvo (60s)?</li></ul></div>
+</div></div>
+
+<!-- REEL 11 -->
+<div class="reel-card"><div class="reel-head" onclick="toggleReel(this)"><h3><span class="rnum">11</span>A Selic vai cair. O que fazer com seu dinheiro?</h3><div class="rmeta"><span class="loc-tag">Coworking</span><span class="dur-tag">45s</span></div></div>
+<div class="reel-body">
+<div class="edit-general">Trilha analitica, revelacao. Grade neutro/quente.</div>
+<div class="edit-section"><h4>Timeline</h4><div class="timeline">
+<span class="ts">[0:00-0:03]</span> <span class="act">Hook + ding.</span><br>
+<span class="ts">[0:03-0:09]</span> <span class="act">Grafico Selic 14.25%→12%.</span><br>
+<span class="ts">[0:09-0:18]</span> <span class="act">PIP calculadora + overlay: R$100k x 14.25% = R$14.250 vs x 12% = R$12.000. Diferenca -R$2.250 vermelho.</span><br>
+<span class="ts">[0:18-0:24]</span> <span class="act">"Seu gerente NAO vai te avisar" + telefone com X.</span><br>
+<span class="ts">[0:24-0:32]</span> <span class="act">Diagrama setas: Renda Fixa → Bolsa/FIIs/Cripto.</span><br>
+<span class="ts">[0:32-0:39]</span> <span class="act">"REPOSICIONE AGORA" pulsa.</span><br>
+<span class="ts">[0:39-0:45]</span> <span class="act">CTA.</span>
+</div></div>
+<div class="edit-section"><h4>Assets</h4><div class="assets-list"><span class="asset-tag">Calculadora fisica</span><span class="asset-tag">Grafico Selic</span><span class="asset-tag">Overlay digital</span><span class="asset-tag">Diagrama migracao</span></div></div>
+<div class="edit-section"><h4>Checklist Pre-Publicacao</h4><ul class="checklist"><li>Primeiro 1,3s tem corte/zoom que prende atencao?</li><li>Legendas corretas? (termos cripto e numeros)</li><li>Numeros-chave destacados visualmente?</li><li>Audio limpo?</li><li>Musica nao compete com a voz? (ducking)</li><li>Video faz sentido COM som desligado?</li><li>CTA final claro?</li><li>Duracao dentro do alvo (45s)?</li></ul></div>
+</div></div>
+
+<!-- REEL 12 -->
+<div class="reel-card"><div class="reel-head" onclick="toggleReel(this)"><h3><span class="rnum">12</span>Inflacao controlada e mentira confortavel</h3><div class="rmeta"><span class="loc-tag">Brinquedoteca</span><span class="dur-tag">45s</span></div></div>
+<div class="reel-body">
+<div class="edit-general">Piano minimalista, melancolico. Vol 12-18%. Trilha cessa na queda (0:35). Silencio ultimos 5s. Cor: dessaturacao -10%, temp fria. Keywords vermelho: R$100, R$15, 3,91%, 85%, "controlada" em italico/aspas.</div>
+<div class="edit-section"><h4>Timeline</h4><div class="timeline">
+<span class="ts">[0:00-0:04]</span> <span class="act">HOOK: Sentado, torre blocos, ironia. Zoom 105%→110%. Texto: "R$100 (1994) → R$15 (hoje)". SFX: coin drop.</span><br>
+<span class="ts">[0:04-0:06]</span> <span class="act">IRONIA: Close, slow motion 80% balancada cabeca. Texto: "Controlada." italico entre aspas.</span><br>
+<span class="ts">[0:06-0:11]</span> <span class="act">TORRE: Aponta torre. Insert close torre baixo→cima. Texto: "TORRE = SEU PODER DE COMPRA"</span><br>
+<span class="ts">[0:11-0:17]</span> <span class="act">BLOCO 1: Tira bloco, close insert 1.5s. Texto: "IPCA: 3,91%". SFX: click.</span><br>
+<span class="ts">[0:17-0:22]</span> <span class="act">BLOCOS 2-3: Tira mais dois, torre balanca. "Ano apos ano..." "Governo apos governo..." SFX: clicks crescentes.</span><br>
+<span class="ts">[0:22-0:28]</span> <span class="act">85%: Quarto bloco, preocupacao. "85% DO PODER DE COMPRA PERDIDO" vermelho + shake. Barra 100%→15%. SFX: bass drop.</span><br>
+<span class="ts">[0:28-0:35]</span> <span class="act">QUEDA: Hesita, tira, TORRE CAI. Slow motion 50%. Trilha cessa. "inflacao controlada" quebra/racha. SFX: silencio + blocos caindo real.</span><br>
+<span class="ts">[0:35-0:45]</span> <span class="act">FINAL: Olha blocos, depois camera. SEM MUSICA. Sem cortes. Zoom in lento. Texto: "Em camera lenta."</span>
+</div></div>
+<div class="edit-section"><h4>Assets</h4><div class="assets-list"><span class="asset-tag">Torre 15-20 blocos</span><span class="asset-tag">Animacao R$100→R$15</span><span class="asset-tag">Barra 100%→15%</span><span class="asset-tag">IPCA estilo jornal</span><span class="asset-tag">Texto quebrando</span></div></div>
+<div class="edit-section"><h4>SFX</h4><div class="sfx-list"><span class="sfx-tag">0:00 coin</span><span class="sfx-tag">0:11 click</span><span class="sfx-tag">0:17/0:19 clicks</span><span class="sfx-tag">0:22 bass drop</span><span class="sfx-tag">0:30 silencio+blocos</span><span class="sfx-tag">0:35-0:45 silencio total</span></div></div>
+<div class="edit-section"><h4>Checklist Pre-Publicacao</h4><ul class="checklist"><li>Primeiro 1,3s tem corte/zoom que prende atencao?</li><li>Legendas corretas? (termos cripto e numeros)</li><li>Numeros-chave destacados visualmente?</li><li>Audio limpo?</li><li>Musica nao compete com a voz? (ducking)</li><li>Video faz sentido COM som desligado?</li><li>CTA final claro?</li><li>Duracao dentro do alvo (45s)?</li></ul></div>
+</div></div>
+
+<!-- REEL 13 -->
+<div class="reel-card"><div class="reel-head" onclick="toggleReel(this)"><h3><span class="rnum">13</span>O real esta se valorizando. Bom ou ruim?</h3><div class="rmeta"><span class="loc-tag">Padel</span><span class="dur-tag">45s</span></div></div>
+<div class="reel-body">
+<div class="edit-general">Beat neutro/analitico. Grade neutro+verde.</div>
+<div class="edit-section"><h4>Timeline</h4><div class="timeline">
+<span class="ts">[0:00-0:04]</span> <span class="act">"DOLAR CAIU. E AI?" + zoom.</span><br>
+<span class="ts">[0:04-0:10]</span> <span class="act">"R$5,50 → R$5,45" + mini chart USD/BRL.</span><br>
+<span class="ts">[0:10-0:17]</span> <span class="act">"REAL ↔ DOLAR" bola animada + som raquete.</span><br>
+<span class="ts">[0:17-0:23]</span> <span class="act">Icones iPhone/viagem/importados + checks verdes.</span><br>
+<span class="ts">[0:23-0:33]</span> <span class="act">Xs vermelhos: exportadores, bolsa, cripto rende menos + impacto grave.</span><br>
+<span class="ts">[0:33-0:42]</span> <span class="act">"TODA REBATIDA TEM DOIS LADOS".</span><br>
+<span class="ts">[0:42-0:45]</span> <span class="act">Slow motion rebatida + fade.</span>
+</div></div>
+<div class="edit-section"><h4>Assets</h4><div class="assets-list"><span class="asset-tag">Mini grafico USD/BRL</span><span class="asset-tag">Icones iPhone/viagem/importado</span><span class="asset-tag">Icone BTC</span><span class="asset-tag">Checks e Xs</span></div></div>
+<div class="edit-section"><h4>Checklist Pre-Publicacao</h4><ul class="checklist"><li>Primeiro 1,3s tem corte/zoom que prende atencao?</li><li>Legendas corretas? (termos cripto e numeros)</li><li>Numeros-chave destacados visualmente?</li><li>Audio limpo?</li><li>Musica nao compete com a voz? (ducking)</li><li>Video faz sentido COM som desligado?</li><li>CTA final claro?</li><li>Duracao dentro do alvo (45s)?</li></ul></div>
+</div></div>
+
+<!-- REEL 14 -->
+<div class="reel-card"><div class="reel-head" onclick="toggleReel(this)"><h3><span class="rnum">14</span>PIB de 1.82%: o Brasil esta andando de lado</h3><div class="rmeta"><span class="loc-tag">Academia</span><span class="dur-tag">45s</span></div></div>
+<div class="reel-body">
+<div class="edit-general">Trilha lenta→acelera quando fala BTC/ouro. Cor fria/cinza→esquenta. Numeros amarelo, palavras negativas vermelho.</div>
+<div class="edit-section"><h4>Timeline</h4><div class="timeline">
+<span class="ts">[0:00-0:05]</span> <span class="act">HOOK: Esteira devagar, ironico. Close painel. Texto: "O BRASIL CRESCE MENOS DE 2% AO ANO". SFX: esteira rodando.</span><br>
+<span class="ts">[0:05-0:12]</span> <span class="act">PIADA: Velocimetro quase zero. "1,82%" pulsando devagar. SFX: sad trombone.</span><br>
+<span class="ts">[0:12-0:18]</span> <span class="act">DADOS: Cards animados "PIB 1,82%" → "SELIC 14,25%→12%" → "INFLACAO 3,91%". Pop suave.</span><br>
+<span class="ts">[0:18-0:27]</span> <span class="act">ESTEIRA: Para, desce. Corte seco + silencio 0.5s. Texto: "ANDANDO NA ESTEIRA SEM SAIR DO LUGAR"</span><br>
+<span class="ts">[0:27-0:37]</span> <span class="act">CONTRASTE: Trilha muda rapida. Cor esquenta. "BTC: +300% EM 4 ANOS" → "OURO: MAXIMA HISTORICA" → "DOLAR: SUBINDO"</span><br>
+<span class="ts">[0:37-0:45]</span> <span class="act">CTA: Close, zoom in. "RITMO DO BRASIL OU RITMO DO MUNDO?" Boom + preto.</span>
+</div></div>
+<div class="edit-section"><h4>Assets</h4><div class="assets-list"><span class="asset-tag">Velocimetro animado</span><span class="asset-tag">3 cards macro</span><span class="asset-tag">Comparativo BTC/ouro/dolar</span></div></div>
+<div class="edit-section"><h4>Checklist Pre-Publicacao</h4><ul class="checklist"><li>Primeiro 1,3s tem corte/zoom que prende atencao?</li><li>Legendas corretas? (termos cripto e numeros)</li><li>Numeros-chave destacados visualmente?</li><li>Audio limpo?</li><li>Musica nao compete com a voz? (ducking)</li><li>Video faz sentido COM som desligado?</li><li>CTA final claro?</li><li>Duracao dentro do alvo (45s)?</li></ul></div>
+</div></div>
+
+<!-- REEL 15 -->
+<div class="reel-card"><div class="reel-head" onclick="toggleReel(this)"><h3><span class="rnum">15</span>Renda fixa em 2026: ainda vale a pena?</h3><div class="rmeta"><span class="loc-tag">Piscina</span><span class="dur-tag">45s</span></div></div>
+<div class="reel-body">
+<div class="edit-general">Lo-fi chill. Grade quente/lifestyle.</div>
+<div class="edit-section"><h4>Timeline</h4><div class="timeline">
+<span class="ts">[0:00-0:04]</span> <span class="act">"RENDA FIXA 14%" ticker verde → X vermelho + cash register → buzz erro.</span><br>
+<span class="ts">[0:04-0:10]</span> <span class="act">Termometro Selic vs Inflacao → rendimento real 8%.</span><br>
+<span class="ts">[0:10-0:18]</span> <span class="act">B-roll piscina + "BONITA, SEGURA, CONFORTAVEL" uma por uma.</span><br>
+<span class="ts">[0:18-0:26]</span> <span class="act">Barra nivel agua descendo: "14,25% → 12% → 10%?" cascata.</span><br>
+<span class="ts">[0:26-0:36]</span> <span class="act">Split "RENDA FIXA +12%/ano" vs "BTC ULTIMO CICLO +150%" + ding.</span><br>
+<span class="ts">[0:36-0:45]</span> <span class="act">Wide lifestyle + "LINK NA BIO".</span>
+</div></div>
+<div class="edit-section"><h4>Assets</h4><div class="assets-list"><span class="asset-tag">Grafico Selic</span><span class="asset-tag">Termometro</span><span class="asset-tag">Arte split RF vs BTC</span></div></div>
+<div class="edit-section"><h4>Checklist Pre-Publicacao</h4><ul class="checklist"><li>Primeiro 1,3s tem corte/zoom que prende atencao?</li><li>Legendas corretas? (termos cripto e numeros)</li><li>Numeros-chave destacados visualmente?</li><li>Audio limpo?</li><li>Musica nao compete com a voz? (ducking)</li><li>Video faz sentido COM som desligado?</li><li>CTA final claro?</li><li>Duracao dentro do alvo (45s)?</li></ul></div>
+</div></div>
+
+<!-- REEL 16 -->
+<div class="reel-card"><div class="reel-head" onclick="toggleReel(this)"><h3><span class="rnum">16</span>Investir e mais simples do que montar LEGO</h3><div class="rmeta"><span class="loc-tag">Brinquedoteca</span><span class="dur-tag">45s</span></div></div>
+<div class="reel-body">
+<div class="edit-general">Upbeat lo-fi, otimista. Vol 18-22%. Cor: saturacao +15-20%, vibrante, quente. Keywords verde: diversificacao, solido, diferentes. Vermelho: caiu, uma coisa so.</div>
+<div class="edit-section"><h4>Timeline</h4><div class="timeline">
+<span class="ts">[0:00-0:03]</span> <span class="act">HOOK: No chao montando, zoom 100%→108%. Texto: "SE UMA CRIANCA ENTENDE..." → "...VOCE TAMBEM ENTENDE."</span><br>
+<span class="ts">[0:03-0:06]</span> <span class="act">PECA: Close peca na mao. Texto: "1 peca = nada". SFX: toc.</span><br>
+<span class="ts">[0:06-0:12]</span> <span class="act">MONTAGEM: Inserts rapidos encaixando. "DIVERSIFICACAO" verde + scale-up. SFX: clicks + chime.</span><br>
+<span class="ts">[0:12-0:17]</span> <span class="act">IGUAIS: Empilha pecas iguais. Trilha levemente tensa. "Todas iguais..." SFX: encaixes ocos.</span><br>
+<span class="ts">[0:17-0:21]</span> <span class="act">QUEDA: Toque, cai, slow motion 60%. "CAIU." vermelho + SHAKE. SFX: silencio + queda + bass.</span><br>
+<span class="ts">[0:21-0:28]</span> <span class="act">LICAO: Bust shot, sem cortes. "TODO O DINHEIRO NUMA COISA SO" + X. "Ate que nao funciona."</span><br>
+<span class="ts">[0:28-0:37]</span> <span class="act">COMPARACAO: Top-down, split. "DIVERSIFICADO ✓" verde / "CONCENTRADO ✗" vermelho. SFX: chime + buzz.</span><br>
+<span class="ts">[0:37-0:45]</span> <span class="act">CTA: Zoom out, otimista. "Se voce monta LEGO, voce investe." verde + "E serio."</span>
+</div></div>
+<div class="edit-section"><h4>Assets</h4><div class="assets-list"><span class="asset-tag">Pecas variadas</span><span class="asset-tag">Pecas iguais</span><span class="asset-tag">Split diversificado vs concentrado</span></div></div>
+<div class="edit-section"><h4>SFX</h4><div class="sfx-list"><span class="sfx-tag">0:03 toc</span><span class="sfx-tag">0:07 clicks(3x)</span><span class="sfx-tag">0:11 chime</span><span class="sfx-tag">0:14 encaixes ocos</span><span class="sfx-tag">0:19 queda+bass</span><span class="sfx-tag">0:30 chime</span><span class="sfx-tag">0:32 buzz</span><span class="sfx-tag">0:37 nota otimista</span></div></div>
+<div class="edit-section"><h4>Checklist Pre-Publicacao</h4><ul class="checklist"><li>Primeiro 1,3s tem corte/zoom que prende atencao?</li><li>Legendas corretas? (termos cripto e numeros)</li><li>Numeros-chave destacados visualmente?</li><li>Audio limpo?</li><li>Musica nao compete com a voz? (ducking)</li><li>Video faz sentido COM som desligado?</li><li>CTA final claro?</li><li>Duracao dentro do alvo (45s)?</li></ul></div>
+</div></div>
+
+<!-- REEL 17 -->
+<div class="reel-card"><div class="reel-head" onclick="toggleReel(this)"><h3><span class="rnum">17</span>Seu patrimonio e um musculo</h3><div class="rmeta"><span class="loc-tag">Academia</span><span class="dur-tag">45s</span></div></div>
+<div class="reel-body">
+<div class="edit-general">Motivacional crescente. Piano→bateria+baixo. Pico na frase final. Cor quente, dourado/ambar, contraste alto. Keywords verde: patrimonio, musculo, consistencia, progressao.</div>
+<div class="edit-section"><h4>Timeline</h4><div class="timeline">
+<span class="ts">[0:00-0:04]</span> <span class="act">HOOK: Halter, close medio. Tela preta 0.3s→fade. Zoom 100%→106%. Texto: "NINGUEM FICA FORTE TREINANDO UMA VEZ" → "NINGUEM FICA RICO INVESTINDO UMA VEZ"</span><br>
+<span class="ts">[0:04-0:14]</span> <span class="act">REPS: Rosca biceps, alternar angulos. Rep 1: "PRIMEIRA SERIE DOI" normal. Rep 2: "SEGUNDA DOI MAIS" slow 70% close rosto. Rep 3: "TERCEIRA... QUER PARAR" slow 50% close halter solto. Heartbeat acelerando.</span><br>
+<span class="ts">[0:14-0:22]</span> <span class="act">IMPACTO: Solta peso. Silencio 0.5s. Zoom punch. Flash branco. "QUEM PARA NA 3a SERIE → NUNCA MUDA O SHAPE" / "QUEM PARA NA 3a QUEDA → NUNCA MUDA DE VIDA"</span><br>
+<span class="ts">[0:22-0:30]</span> <span class="act">EXPLICACAO: Caminhando gimbal. Overlay grafico patrimonio. "PATRIMONIO = MUSCULO" → "CONSISTENCIA > INTENSIDADE"</span><br>
+<span class="ts">[0:30-0:37]</span> <span class="act">CARGA: Halter pesado, rep. Close peso. "GANHA MAIS → APORTA MAIS → PROGRESSAO DE CARGA". SFX: level up.</span><br>
+<span class="ts">[0:37-0:45]</span> <span class="act">FECHO: Close, zoom 100%→120%. Trilha pico. Corte preto. "COMECA HOJE. REPETE AMANHA. NAO PARA."</span>
+</div></div>
+<div class="edit-section"><h4>Assets</h4><div class="assets-list"><span class="asset-tag">Grafico patrimonio</span><span class="asset-tag">Animacao progressao carga</span><span class="asset-tag">Heartbeat</span><span class="asset-tag">Level up</span><span class="asset-tag">Flash branco</span></div></div>
+<div class="edit-section"><h4>Checklist Pre-Publicacao</h4><ul class="checklist"><li>Primeiro 1,3s tem corte/zoom que prende atencao?</li><li>Legendas corretas? (termos cripto e numeros)</li><li>Numeros-chave destacados visualmente?</li><li>Audio limpo?</li><li>Musica nao compete com a voz? (ducking)</li><li>Video faz sentido COM som desligado?</li><li>CTA final claro?</li><li>Duracao dentro do alvo (45s)?</li></ul></div>
+</div></div>
+
+<!-- REEL 18 -->
+<div class="reel-card"><div class="reel-head" onclick="toggleReel(this)"><h3><span class="rnum">18</span>A piscina que ninguem te ensina a construir</h3><div class="rmeta"><span class="loc-tag">Piscina</span><span class="dur-tag">45s</span></div></div>
+<div class="reel-body">
+<div class="edit-general">Piano inspiracional crescente. Grade dourado/golden hour.</div>
+<div class="edit-section"><h4>Timeline</h4><div class="timeline">
+<span class="ts">[0:00-0:03]</span> <span class="act">Slow motion 85% caminhada + "TODO MUNDO QUER A PISCINA" → "NINGUEM QUER CAVAR O BURACO" + heartbeat.</span><br>
+<span class="ts">[0:03-0:08]</span> <span class="act">B-roll piscina vazia (Pexels) → morph piscina cheia.</span><br>
+<span class="ts">[0:08-0:18]</span> <span class="act">Cards FIIs R$500/mes, Staking ETH 4%, Dividendos + splash a cada card.</span><br>
+<span class="ts">[0:18-0:23]</span> <span class="act">Close mao agua slow motion 50% beauty shot.</span><br>
+<span class="ts">[0:23-0:34]</span> <span class="act">Zoom in + B-roll piscina rasa + "A MAIORIA DESISTE" fade.</span><br>
+<span class="ts">[0:34-0:40]</span> <span class="act">Wide cinematografico piscina cheia, sem texto.</span><br>
+<span class="ts">[0:40-0:45]</span> <span class="act">CTA "LINK NA BIO".</span>
+</div></div>
+<div class="edit-section"><h4>Assets</h4><div class="assets-list"><span class="asset-tag">B-roll piscina vazia/rasa (Pexels)</span><span class="asset-tag">Icones FIIs/ETH/dividendos</span><span class="asset-tag">Cards animados</span></div></div>
+<div class="edit-section"><h4>Checklist Pre-Publicacao</h4><ul class="checklist"><li>Primeiro 1,3s tem corte/zoom que prende atencao?</li><li>Legendas corretas? (termos cripto e numeros)</li><li>Numeros-chave destacados visualmente?</li><li>Audio limpo?</li><li>Musica nao compete com a voz? (ducking)</li><li>Video faz sentido COM som desligado?</li><li>CTA final claro?</li><li>Duracao dentro do alvo (45s)?</li></ul></div>
+</div></div>
+
+<!-- REEL 19 -->
+<div class="reel-card"><div class="reel-head" onclick="toggleReel(this)"><h3><span class="rnum">19</span>O mercado e um jogo de padel</h3><div class="rmeta"><span class="loc-tag">Padel</span><span class="dur-tag">45s</span></div></div>
+<div class="reel-body">
+<div class="edit-general">Motivacional/documentario esportivo. Grade quente/vibrante.</div>
+<div class="edit-section"><h4>Timeline</h4><div class="timeline">
+<span class="ts">[0:00-0:04]</span> <span class="act">B-roll jogo slow motion 1.5s → corte seco + "O MERCADO E UM JOGO".</span><br>
+<span class="ts">[0:04-0:12]</span> <span class="act">Caminhada + "PACIENCIA" → "BOLA CERTA" → "LUGAR CERTO" checks verdes.</span><br>
+<span class="ts">[0:12-0:20]</span> <span class="act">Cortes rapidos + "COMPRA E VENDE TODO DIA" → "NERVOSO" → "BOLA PRA FORA" vermelhos + buzzer.</span><br>
+<span class="ts">[0:20-0:28]</span> <span class="act">Dourado + lens flare + "GANHA O CAMPEONATO" aplausos.</span><br>
+<span class="ts">[0:28-0:38]</span> <span class="act">Icones BTC+RF+Acoes+Ouro + "DUPLA QUE GANHA JOGO".</span><br>
+<span class="ts">[0:38-0:43]</span> <span class="act">"JOGA COM INTELIGENCIA" zoom in.</span><br>
+<span class="ts">[0:43-0:45]</span> <span class="act">Slow motion rebatida + fade.</span>
+</div></div>
+<div class="edit-section"><h4>Assets</h4><div class="assets-list"><span class="asset-tag">Icones BTC/RF/Acoes/Ouro</span><span class="asset-tag">Checks verdes</span><span class="asset-tag">Xs vermelhos</span></div></div>
+<div class="edit-section"><h4>Checklist Pre-Publicacao</h4><ul class="checklist"><li>Primeiro 1,3s tem corte/zoom que prende atencao?</li><li>Legendas corretas? (termos cripto e numeros)</li><li>Numeros-chave destacados visualmente?</li><li>Audio limpo?</li><li>Musica nao compete com a voz? (ducking)</li><li>Video faz sentido COM som desligado?</li><li>CTA final claro?</li><li>Duracao dentro do alvo (45s)?</li></ul></div>
+</div></div>
+
+<!-- REEL 20 -->
+<div class="reel-card"><div class="reel-head" onclick="toggleReel(this)"><h3><span class="rnum">20</span>O escritorio do investidor do futuro</h3><div class="rmeta"><span class="loc-tag">Coworking</span><span class="dur-tag">45s</span></div></div>
+<div class="reel-body">
+<div class="edit-general">Inspiradora crescente, fintech. Grade quente/dourado.</div>
+<div class="edit-section"><h4>Timeline</h4><div class="timeline">
+<span class="ts">[0:00-0:04]</span> <span class="act">Filtro sepia "30 ANOS" → cor normal "HOJE" + telefone antigo.</span><br>
+<span class="ts">[0:04-0:09]</span> <span class="act">Slow motion bracos abertos. "Mesa. Notebook. Wi-Fi." uma por uma.</span><br>
+<span class="ts">[0:09-0:16]</span> <span class="act">Insert celular app exchange. "3 toques → Bitcoin", "2 toques → Acao" + dings.</span><br>
+<span class="ts">[0:16-0:20]</span> <span class="act">Checklist riscada "✗ Corretor", "✗ Autorizacao", "✗ Taxa" + slashes.</span><br>
+<span class="ts">[0:20-0:27]</span> <span class="act">Split sepia pregao antigo | cores Andre celular. "1995: dias" | "2026: 30 segundos".</span><br>
+<span class="ts">[0:27-0:35]</span> <span class="act">"Antes: DINHEIRO" → "Hoje: INFORMACAO" dourada.</span><br>
+<span class="ts">[0:35-0:40]</span> <span class="act">Lens flare + "INFORMACAO E PODER".</span><br>
+<span class="ts">[0:40-0:45]</span> <span class="act">CTA.</span>
+</div></div>
+<div class="edit-section"><h4>Assets</h4><div class="assets-list"><span class="asset-tag">Pregao Bovespa/NYSE vintage</span><span class="asset-tag">Screen recording exchange</span><span class="asset-tag">Filtro sepia</span><span class="asset-tag">Checklist animada</span></div></div>
+<div class="edit-section"><h4>Checklist Pre-Publicacao</h4><ul class="checklist"><li>Primeiro 1,3s tem corte/zoom que prende atencao?</li><li>Legendas corretas? (termos cripto e numeros)</li><li>Numeros-chave destacados visualmente?</li><li>Audio limpo?</li><li>Musica nao compete com a voz? (ducking)</li><li>Video faz sentido COM som desligado?</li><li>CTA final claro?</li><li>Duracao dentro do alvo (45s)?</li></ul></div>
+</div></div>
+
+</div><!-- end view-editor -->
+
+<!-- ==================== TAB 3: ANDRE ==================== -->
+<div class="view" id="view-andre">
+
+<div class="sub-tabs">
+<button class="sub-tab active" onclick="showSub('ordem')">Ordem de Gravacao</button>
+<button class="sub-tab" onclick="showSub('materiais')">Lista de Materiais</button>
+<button class="sub-tab" onclick="showSub('teleprompter')">Roteiros TP</button>
+<button class="sub-tab" onclick="showSub('legendas')">Legendas do Post</button>
+</div>
+
+<!-- 3a. ORDEM -->
+<div class="sub-view active" id="sub-ordem">
+<div class="ordem-card"><span class="num">1</span><div class="info"><h4>Quadra de Padel</h4><p>Reels 6, 9, 13, 19 — Roupa esportiva (dry-fit escura + bermuda)</p></div><span class="time">~90 min</span></div>
+<div class="ordem-card"><span class="num">2</span><div class="info"><h4>Academia</h4><p>Reels 1, 8, 14, 17 — Roupa de treino (camiseta preta + bermuda escura)</p></div><span class="time">~90 min</span></div>
+<div class="ordem-card"><span class="num">3</span><div class="info"><h4>Piscina</h4><p>Reels 3, 10, 15, 18 — Casual (bermuda + camiseta neutra). HORARIO: 7h-9h ou 15h30-17h</p></div><span class="time">~2h</span></div>
+<div class="ordem-card"><span class="num">4</span><div class="info"><h4>Brinquedoteca</h4><p>Reels 2, 5, 12, 16 — Casual (camiseta lisa escura)</p></div><span class="time">~2h</span></div>
+<div class="ordem-card"><span class="num">5</span><div class="info"><h4>Coworking</h4><p>Reels 4, 7, 11, 20 — Camisa social/polo escura</p></div><span class="time">~2h30</span></div>
+<div style="background:var(--card);border-radius:12px;padding:16px;margin-top:16px;text-align:center;border:2px solid var(--accent)">
+<h3 style="color:var(--accent);margin-bottom:4px">Total estimado: ~10 horas</h3>
+<p style="color:var(--text2)">Recomendacao: 2 dias de filmagem</p>
+</div>
+</div>
+
+<!-- 3b. MATERIAIS -->
+<div class="sub-view" id="sub-materiais">
+
+<div class="mat-section"><h3>Equipamento</h3>
+<div class="mat-item" onclick="this.classList.toggle('done')"><div class="check">&#10003;</div><span>Camera + baterias reserva</span></div>
+<div class="mat-item" onclick="this.classList.toggle('done')"><div class="check">&#10003;</div><span>Gimbal/estabilizador carregado</span></div>
+<div class="mat-item" onclick="this.classList.toggle('done')"><div class="check">&#10003;</div><span>Tripe</span></div>
+<div class="mat-item" onclick="this.classList.toggle('done')"><div class="check">&#10003;</div><span>Lapela wireless (Rode Wireless GO ou similar) + baterias</span></div>
+<div class="mat-item" onclick="this.classList.toggle('done')"><div class="check">&#10003;</div><span>LED painel portatil</span></div>
+<div class="mat-item" onclick="this.classList.toggle('done')"><div class="check">&#10003;</div><span>Cartoes de memoria formatados (min 128GB)</span></div>
+</div>
+
+<div class="mat-section"><h3>Props</h3>
+<div class="mat-item" onclick="this.classList.toggle('done')"><div class="check">&#10003;</div><span>Pecas de montar coloridas — 50+ unidades em varias cores (Brinquedoteca)</span></div>
+<div class="mat-item" onclick="this.classList.toggle('done')"><div class="check">&#10003;</div><span>Torre de blocos de empilhar — 15-20 blocos + reservas (Reel 12)</span></div>
+<div class="mat-item" onclick="this.classList.toggle('done')"><div class="check">&#10003;</div><span>3-4 pecas de cores fortes separadas (Reel 5)</span></div>
+<div class="mat-item" onclick="this.classList.toggle('done')"><div class="check">&#10003;</div><span>8-10 pecas da mesma cor para torre instavel (Reel 16)</span></div>
+<div class="mat-item" onclick="this.classList.toggle('done')"><div class="check">&#10003;</div><span>2 raquetes de padel + bolas (Padel)</span></div>
+<div class="mat-item" onclick="this.classList.toggle('done')"><div class="check">&#10003;</div><span>Pedras pequenas para jogar na piscina (Reel 10)</span></div>
+<div class="mat-item" onclick="this.classList.toggle('done')"><div class="check">&#10003;</div><span>Calculadora fisica (Reel 11 — Coworking)</span></div>
+</div>
+
+<div class="mat-section"><h3>Digital (preparar antes)</h3>
+<div class="mat-item" onclick="this.classList.toggle('done')"><div class="check">&#10003;</div><span>Slide "18/03/2026" no monitor (Reel 4)</span></div>
+<div class="mat-item" onclick="this.classList.toggle('done')"><div class="check">&#10003;</div><span>Manchete Clarity Act no monitor (Reel 7)</span></div>
+<div class="mat-item" onclick="this.classList.toggle('done')"><div class="check">&#10003;</div><span>App de exchange aberto no celular (Reel 20)</span></div>
+<div class="mat-item" onclick="this.classList.toggle('done')"><div class="check">&#10003;</div><span>TradingView com graficos (B-roll coworking)</span></div>
+</div>
+
+<div class="mat-section"><h3>Figurino</h3>
+<div class="mat-item" onclick="this.classList.toggle('done')"><div class="check">&#10003;</div><span>Camiseta dry-fit escura (Padel + Academia)</span></div>
+<div class="mat-item" onclick="this.classList.toggle('done')"><div class="check">&#10003;</div><span>Bermuda esportiva (Padel + Academia)</span></div>
+<div class="mat-item" onclick="this.classList.toggle('done')"><div class="check">&#10003;</div><span>Tenis esportivo (Padel)</span></div>
+<div class="mat-item" onclick="this.classList.toggle('done')"><div class="check">&#10003;</div><span>Camiseta preta lisa sem estampa (Academia)</span></div>
+<div class="mat-item" onclick="this.classList.toggle('done')"><div class="check">&#10003;</div><span>Bermuda escura casual (Piscina)</span></div>
+<div class="mat-item" onclick="this.classList.toggle('done')"><div class="check">&#10003;</div><span>Camiseta/camisa leve neutra (Piscina)</span></div>
+<div class="mat-item" onclick="this.classList.toggle('done')"><div class="check">&#10003;</div><span>Camiseta lisa preta ou cinza escuro (Brinquedoteca)</span></div>
+<div class="mat-item" onclick="this.classList.toggle('done')"><div class="check">&#10003;</div><span>Camisa social slim azul marinho/preta OU polo escura (Coworking)</span></div>
+<div class="mat-item" onclick="this.classList.toggle('done')"><div class="check">&#10003;</div><span>Relogio (opcional, Coworking)</span></div>
+</div>
+</div>
+
+<!-- 3c. TELEPROMPTER -->
+<div class="sub-view" id="sub-teleprompter">
+<p style="color:var(--text2);margin-bottom:16px;font-size:0.9em">Texto limpo para teleprompter, organizado por locacao na ordem de filmagem.</p>
+
+<h3 style="color:var(--accent);margin:20px 0 12px;font-size:1.1em;border-bottom:2px solid var(--accent);padding-bottom:8px">PADEL</h3>
+
+<div class="tp-block"><h3>Reel 6 — Bitcoin e S&P 500: grudados</h3><div class="tp-loc">Padel | 45s</div>
+<div class="tp-text">Voce comprou Bitcoin pra se proteger da bolsa. So que eles estao andando juntos. A correlacao entre Bitcoin e o S&P 500 esta em zero virgula cinquenta e cinco. Quando a bolsa americana cai, o Bitcoin cai junto. Quando sobe, sobe junto. Pensa no padel. Padel e jogo de dupla. Quando o seu parceiro erra, voce sente. Quando ele acerta, voces dois ganham o ponto. O Bitcoin e a bolsa americana estao jogando como dupla agora. E o que esta pressionando os dois e a mesma coisa: dolar forte. Isso enfraquece a tese de que Bitcoin e um hedge contra o mercado tradicional. Pelo menos no curto prazo. Entao para de achar que so porque voce tem Bitcoin, voce esta protegido. Agora, os dois estao na mesma quadra, do mesmo lado da rede.</div></div>
+
+<div class="tp-block"><h3>Reel 9 — Bitcoin vs Ouro: quem vence?</h3><div class="tp-loc">Padel | 45s</div>
+<div class="tp-text">Seu avo confiava no ouro. Seu neto vai confiar no Bitcoin. Quem esta certo? De um lado, ouro. Cinco mil anos de historia. Reserva de valor que atravessou imperios, guerras e crises. Do outro, Bitcoin. Dezessete anos de vida. Mas que rendeu mais que qualquer ativo na ultima decada. Vamos ver quem ganha esse match. O ratio Bitcoin dividido por ouro esta na minima de dois anos. Bitcoin esta barato comparado ao ouro. E historicamente, toda vez que isso aconteceu, o Bitcoin disparou logo depois. Ouro e defesa. Bitcoin e ataque. O investidor inteligente nao escolhe um lado. Ele joga com os dois. Mas se voce me perguntar quem vai ganhar o match dos proximos dez anos, minha aposta esta no Bitcoin.</div></div>
+
+<div class="tp-block"><h3>Reel 13 — O real esta se valorizando. Bom ou ruim?</h3><div class="tp-loc">Padel | 45s</div>
+<div class="tp-text">O dolar caiu. Todo mundo comemorou. Mas ninguem entendeu o que isso realmente significa. O cambio foi de cinco e cinquenta para cinco e quarenta e cinco. O real se fortaleceu. E as pessoas acham que isso e so boa noticia. Pensa na quadra. Real de um lado, dolar do outro. Eles estao trocando bola. Cada rebatida e um movimento cambial. Quando o real se valoriza, compras internacionais ficam mais baratas. iPhone, viagem, importados. Beleza. Mas o outro lado: exportadores brasileiros ganham menos. Bolsa brasileira pode sofrer. E cripto? Cripto e cotada em dolar. Real forte significa que seu Bitcoin em reais rende menos. Antes de comemorar a queda do dolar, entenda: no cambio, toda rebatida tem um lado bom e um lado ruim. Depende de onde voce esta na quadra.</div></div>
+
+<div class="tp-block"><h3>Reel 19 — O mercado e um jogo de padel</h3><div class="tp-loc">Padel | 45s</div>
+<div class="tp-text">O melhor jogador de padel nunca tenta matar a bola. Ele espera. Igual o melhor investidor. No padel, o cara que ganha nao e o que bate mais forte. E o que tem paciencia. Espera a bola certa. E coloca no lugar certo. Mercado e exatamente igual. O investidor que tenta acertar o timing toda hora, que compra e vende todo dia, que fica nervoso com cada noticia — esse e o cara que bate a bola pra fora. Agora o investidor que estuda, que sabe o que tem na carteira, que espera o momento certo — esse ganha o campeonato. E tem mais: voce nao joga sozinho. E jogo de dupla. Sua carteira tambem e. Bitcoin sozinho nao e estrategia. Bitcoin com renda fixa, com acoes, com ouro — isso e uma dupla que ganha jogo. Para de tentar matar a bola. Joga com inteligencia.</div></div>
+
+<h3 style="color:var(--accent);margin:20px 0 12px;font-size:1.1em;border-bottom:2px solid var(--accent);padding-bottom:8px">ACADEMIA</h3>
+
+<div class="tp-block"><h3>Reel 1 — O Bitcoin caiu 52%. E agora?</h3><div class="tp-loc">Academia | 45s</div>
+<div class="tp-text">Eu perdi metade do meu patrimonio em 4 meses. E nao vendi um unico satoshi. O Bitcoin caiu 52% da maxima historica. Foi de all-time high pra 60 mil dolares. E agora ta voltando. Ta em 72 mil. Sabe o que os holders de longo prazo fizeram? Reduziram a venda em 87%. Oitenta e sete por cento. Enquanto todo mundo vendia no panico, quem entende o jogo segurou. Aguentar o peso do mercado e igual aguentar o peso na academia. Quem desiste no meio da serie nunca ve o resultado. RSI ta em 44. Zona neutra. Isso nao e fundo confirmado, mas e zona de oportunidade pra quem tem estomago. A pergunta nao e se o Bitcoin vai voltar. E se voce vai estar posicionado quando ele voltar.</div></div>
+
+<div class="tp-block"><h3>Reel 8 — DCA: a estrategia mais chata e mais lucrativa</h3><div class="tp-loc">Academia | 45s</div>
+<div class="tp-text">A estrategia que me fez ganhar dinheiro e tao chata que a maioria desiste em 3 meses. Se chama DCA. Dollar-Cost Averaging. Em portugues: aportes regulares. Toda semana, todo mes, voce compra. Nao importa o preco. Primeira repeticao. Segunda repeticao. Terceira repeticao. Sabe o que acontece com quem fez DCA desde a maxima historica do Bitcoin? Comprou a um preco medio muito menor do que quem tentou acertar o fundo. DCA e repeticao. Igual treino. Voce nao fica forte com uma serie. Voce fica forte fazendo a mesma coisa, toda semana, sem parar. Os holders de longo prazo estao acumulando agora. A pergunta e: voce ta acumulando junto ou ta esperando o momento perfeito que nunca vem?</div></div>
+
+<div class="tp-block"><h3>Reel 14 — PIB de 1.82%: o Brasil esta andando de lado</h3><div class="tp-loc">Academia | 45s</div>
+<div class="tp-text">O Brasil cresce menos de 2% ao ano. Sabe o que mais cresce 2% ao ano? A poupanca. Ta vendo esse ritmo? E assim que o Brasil ta crescendo. Um virgula oitenta e dois por cento. Eu ando mais rapido que o PIB. PIB projetado pra 2026: 1,82%. A Selic ta em 14,25%, caindo pra 12. Inflacao em 3,91%. Isso significa o que na pratica? Que se o seu dinheiro ta parado em renda fixa brasileira, voce ta empatando com a inflacao. No maximo. Voce ta andando na esteira sem sair do lugar. Enquanto o Brasil anda a 1,82%, o Bitcoin valorizou mais de 300% em 4 anos. Ouro bateu maxima historica. Dolar nao para de subir. Voce pode andar no ritmo do Brasil ou pode se expor a ativos que andam no ritmo do mundo. A escolha e sua.</div></div>
+
+<div class="tp-block"><h3>Reel 17 — Seu patrimonio e um musculo</h3><div class="tp-loc">Academia | 45s</div>
+<div class="tp-text">Ninguem fica forte treinando uma vez. Ninguem fica rico investindo uma vez. Primeira serie doi. Segunda serie doi mais. Terceira... voce quer parar. Mas quem para na terceira serie nunca muda o shape. E quem para de investir na terceira queda nunca muda de vida. Seu patrimonio e um musculo. Ele nao cresce com um aporte. Ele cresce com consistencia. Aporte atras de aporte. Mes apos mes. Ano apos ano. E assim como no treino, voce precisa aumentar a carga. Conforme voce ganha mais, voce aporta mais. Progressao de carga. Nao existe atalho. Nao existe hack. Existe repeticao, disciplina e tempo. Na academia e nos investimentos. Comeca hoje. Repete amanha. Nao para.</div></div>
+
+<h3 style="color:var(--accent);margin:20px 0 12px;font-size:1.1em;border-bottom:2px solid var(--accent);padding-bottom:8px">PISCINA</h3>
+
+<div class="tp-block"><h3>Reel 3 — As baleias pararam de vender</h3><div class="tp-loc">Piscina | 45s</div>
+<div class="tp-text">Enquanto voce vende em panico, os bilionarios estao fazendo o contrario. Os long-term holders — os caras que seguram Bitcoin ha mais de 155 dias — reduziram as vendas em 87%. Eram 250 mil Bitcoins por mes sendo vendidos. Agora? 32 mil. Isso e um colapso de oferta. As baleias vivem na profundidade — voce nao ve elas na superficie, mas quando elas se movem, a agua toda muda. E elas acabaram de parar de se mexer. Quando quem tem bilhoes para de vender e voce vende... quem e que ta errado nessa historia? Segue aqui pra nao ficar do lado errado.</div></div>
+
+<div class="tp-block"><h3>Reel 10 — Marco pode ser o mes que muda tudo</h3><div class="tp-loc">Piscina | 60s</div>
+<div class="tp-text">5 eventos estao acontecendo AO MESMO TEMPO em marco. Isso nunca aconteceu antes. Primeiro: dia 18, o Fed decide a taxa de juros americana. Se sinalizar corte, o dinheiro institucional entra com tudo. Segundo: o Clarity Act — a primeira lei seria de regulamentacao cripto nos EUA — ta avancando no Congresso. Terceiro: dois mega-eventos — DC Blockchain Summit e Digital Asset Summit. Todo grande player vai estar la. Quarto: o Bitcoin 20 milhoes acabou de ser minerado. So restam 1 milhao pra sempre. Pra sempre. E quinto... Olha essa agua. Calma, parada. E exatamente assim que o mercado fica antes de explodir. 5 eventos. 5 ondas. E quando elas se encontram no meio... Os long-term holders ja pararam de vender. Eles sabem o que vem ai. A pergunta e: e voce? Comenta 'MARCO' que eu te mando o material completo.</div></div>
+
+<div class="tp-block"><h3>Reel 15 — Renda fixa em 2026: ainda vale a pena?</h3><div class="tp-loc">Piscina | 45s</div>
+<div class="tp-text">Renda fixa rendendo 14% ao ano parece bom. Ate voce fazer uma conta que ninguem faz. Selic ta em 14,25%. Desconta inflacao, sobram uns 8% reais. Renda fixa e tipo essa piscina: bonita, segura, confortavel. Mas se a agua vai evaporando... Cada corte na Selic e um pouquinho de agua saindo. 14,25 hoje. 12 no fim do ano. 10 ano que vem? Aquele rendimento gordo? Vai secando. E a conta que ninguem faz? Custo de oportunidade. Enquanto voce trava 12% ao ano, Bitcoin fez 150% no ultimo ciclo. Nao e pra tirar tudo da renda fixa — e pra entender que conforto tem preco. Monta uma estrategia que funciona com a agua subindo E descendo. Link na bio.</div></div>
+
+<div class="tp-block"><h3>Reel 18 — A piscina que ninguem te ensina a construir</h3><div class="tp-loc">Piscina | 45s</div>
+<div class="tp-text">Todo mundo quer a piscina. Ninguem quer cavar o buraco. Todo mundo ve a piscina pronta e fala: 'que sorte'. Ninguem viu os anos cavando, enchendo balde por balde. Cada aporte e um balde de agua. R$500 por mes em FIIs? Um balde. Staking de Ethereum rendendo 4% ao ano? Mais um balde. Dividendos pingando todo trimestre? Outro balde. A piscina nao enche de uma vez. Ela enche com consistencia. O problema e que depois de 6 meses colocando balde e a piscina ainda ta no raso, a maioria desiste. E ai fica a vida inteira invejando a piscina dos outros. Comeca a encher a sua. Primeiro aporte, link na bio.</div></div>
+
+<h3 style="color:var(--accent);margin:20px 0 12px;font-size:1.1em;border-bottom:2px solid var(--accent);padding-bottom:8px">BRINQUEDOTECA</h3>
+
+<div class="tp-block"><h3>Reel 2 — So faltam 1 milhao de Bitcoins</h3><div class="tp-loc">Brinquedoteca | 45s</div>
+<div class="tp-text">Imagina se so existissem 21 bolas de gude no mundo inteiro. Quanto valeria cada uma? Pois e. O Bitcoin funciona assim. So vao existir 21 milhoes de unidades. Nunca. Jamais. Nenhuma a mais. Dessas 21 milhoes, 20 milhoes ja foram mineradas. Ja foram. Sobra isso aqui. Menos de 1 milhao de Bitcoins. Pra todo o planeta dividir. Isso significa que 95% de todo o Bitcoin que vai existir na historia ja foi criado. E sabe quando o ultimo Bitcoin vai ser minerado? Em 2140. Daqui a mais de 100 anos. Entao me responde: se o ouro vale o que vale porque e escasso... o que acontece com um ativo que e matematicamente limitado? Pensa nisso.</div></div>
+
+<div class="tp-block"><h3>Reel 5 — 38% das altcoins estao no menor preco do ciclo</h3><div class="tp-loc">Brinquedoteca | 45s</div>
+<div class="tp-text">A ultima vez que isso aconteceu, quem investiu R$1.000 transformou em R$50.000. Mas calma. Antes de sair comprando tudo, me ouve. Olha quantas pecas. A maioria ta jogada aqui, ninguem quer. Ninguem ta olhando pra isso. Agora, o dado: 38% de todas as altcoins estao no menor preco desse ciclo inteiro. Esmagadas. Enquanto o Bitcoin se mantem firme la em cima, essas aqui estao no chao. E sabe o que a historia mostra? Que depois que o Bitcoin lidera a alta, o capital escorre pra essas altcoins. Sempre aconteceu. Mas algumas dessas aqui vao valer uma fortuna. E a maioria... vai continuar no chao. A questao e: voce sabe escolher? Porque oportunidade sem criterio e so aposta.</div></div>
+
+<div class="tp-block"><h3>Reel 12 — Inflacao controlada e mentira confortavel</h3><div class="tp-loc">Brinquedoteca | 45s</div>
+<div class="tp-text">R$100 em 1994 valem R$15 hoje. Mas pode ficar tranquilo, a inflacao ta controlada. Controlada. Faz de conta que essa torre aqui e o seu poder de compra. Cada bloco e um ano da sua vida. Cada ano, a inflacao tira um pedacinho. IPCA de 3,91%? Parece pouco, ne? Parece inofensivo. Voce nem percebe. Mas vai acumulando. Ano apos ano. Governo apos governo. Desde o Plano Real, o real perdeu 85% do poder de compra. Oitenta e cinco por cento. Entao quando alguem te diz que a inflacao ta controlada... ...e isso que ta acontecendo com o seu dinheiro. So que em camera lenta. E voce nem percebe.</div></div>
+
+<div class="tp-block"><h3>Reel 16 — Investir e mais simples do que montar LEGO</h3><div class="tp-loc">Brinquedoteca | 45s</div>
+<div class="tp-text">Se uma crianca de 7 anos entende, voce tambem entende. Vem comigo. Uma peca sozinha nao faz nada. Duas, tres... comeca a formar algo. Isso aqui? Isso e diversificacao. Voce pega pecas diferentes — tamanhos diferentes, cores diferentes — e monta algo solido. Agora olha o que acontece quando voce coloca todas as pecas iguais... Parece que ta de pe, ne? Caiu. Isso e colocar todo o seu dinheiro numa coisa so. Pode ate parecer que ta funcionando. Ate que nao ta. Diversificacao nao e complicado. E isso aqui. Pecas diferentes. Encaixes diferentes. Resultado solido. Se voce consegue montar LEGO, voce consegue investir. E serio.</div></div>
+
+<h3 style="color:var(--accent);margin:20px 0 12px;font-size:1.1em;border-bottom:2px solid var(--accent);padding-bottom:8px">COWORKING</h3>
+
+<div class="tp-block"><h3>Reel 4 — O Fed decide o futuro do seu dinheiro dia 18</h3><div class="tp-loc">Coworking | 45s</div>
+<div class="tp-text">Dia 18, um homem em Washington vai decidir se o seu investimento sobe ou desce. O nome dele e Jerome Powell. Ele comanda o Fed. E dia 18 de marco, ele anuncia a decisao sobre os juros dos Estados Unidos. O mercado inteiro ta esperando uma sinalizacao de corte. Se vier, dinheiro flui pra ativos de risco. Se nao vier, o mercado despenca. Aqui e onde eu analiso o mercado. E tudo que eu analiso aponta pra essa data. O Bitcoin ta em 72 mil dolares. A correlacao dele com o S&P 500 ta em 0.55. Isso significa que quando a bolsa americana se mexe, o Bitcoin se mexe junto. E dia 18, a bolsa americana VAI se mexer. Se voce tem qualquer dinheiro investido — cripto, acao, fundo — marca essa data. 18 de marco. Porque o que o Powell falar muda tudo. Me segue pra eu te avisar em tempo real.</div></div>
+
+<div class="tp-block"><h3>Reel 7 — Uma lei pode mudar tudo no mercado cripto</h3><div class="tp-loc">Coworking | 45s</div>
+<div class="tp-text">Enquanto voce assiste Reels, estao votando uma lei que pode dobrar ou destruir o mercado cripto. O nome e Clarity Act. Projeto de lei em revisao no Congresso americano. Ela define quais criptomoedas sao commodities — como o ouro — e quais sao valores mobiliarios — como uma acao. Se a sua cripto for classificada como valor mobiliario, ela passa a ser regulada pela SEC. Isso muda TUDO. Requisitos, custos, restricoes. Isso aqui nao e sobre grafico. E sobre uma lei. E em marco ta rolando o DC Blockchain Summit e o Digital Asset Summit — os dois maiores eventos de cripto e regulacao. E la que os legisladores e as exchanges vao negociar o futuro do mercado. O que sair desses eventos define se a sua altcoin vai continuar existindo ou ser tirada das exchanges. Presta atencao. Essa e a noticia mais importante do mes e quase ninguem ta falando. Me segue que eu vou cobrir tudo.</div></div>
+
+<div class="tp-block"><h3>Reel 11 — A Selic vai cair. O que fazer com seu dinheiro?</h3><div class="tp-loc">Coworking | 45s</div>
+<div class="tp-text">Seu CDB vai render menos a cada mes. E ninguem no seu banco vai te avisar. A Selic hoje ta em 14.25%. A projecao e que caia pra 12% ate o final de 2026. Inflacao projetada em 3.91%. Vou fazer uma conta na frente de voces. 100 mil reais num CDB que paga 100% do CDI: hoje, 14 mil reais por ano. Com a Selic em 12%, esse mesmo CDB vai te pagar 12 mil. Sao 2 mil reais a menos. No mesmo investimento. E o seu gerente nao vai te ligar pra avisar. Ele vai continuar empurrando CDB porque e o que da comissao pra ele. Quando a Selic cai, o dinheiro inteligente migra. Vai pra bolsa, vai pra fundos imobiliarios, vai pra cripto. O Copom pode comecar o ciclo de corte ja em marco. Se voce nao reposicionar agora, vai perder rendimento em silencio. Me segue que eu te mostro pra onde mover.</div></div>
+
+<div class="tp-block"><h3>Reel 20 — O escritorio do investidor do futuro</h3><div class="tp-loc">Coworking | 45s</div>
+<div class="tp-text">Ha 30 anos voce precisava de um terno e uma ligacao pra comprar uma acao. Hoje eu faco isso daqui. Uma mesa, um notebook, Wi-Fi. Daqui eu acesso o mesmo mercado que o cara de terno na Faria Lima. Olha isso. Com tres toques eu compro Bitcoin. Com mais dois eu compro uma acao americana. Sem ligar pra ninguem, sem pedir autorizacao, sem pagar taxa absurda. Em 1995, pra investir no mercado americano voce precisava de corretor internacional, mandar dinheiro por cabo, esperar dias. Hoje eu faco em 30 segundos do celular. A tecnologia nao so mudou a ferramenta. Ela mudou QUEM pode investir. Antes era pra quem tinha dinheiro e conexao. Hoje e pra quem tem informacao. E informacao e o que eu trago aqui todo dia. Me segue.</div></div>
+
+</div><!-- end sub-teleprompter -->
+
+<!-- 3d. LEGENDAS -->
+<div class="sub-view" id="sub-legendas">
+<p style="color:var(--text2);margin-bottom:16px;font-size:0.9em">Legendas prontas para copiar e colar no Instagram.</p>
+
+<div class="legenda-card"><h3>Reel 1 — O Bitcoin caiu 52%. E agora?</h3>
+<div class="legenda-text" id="leg1">Eu perdi metade do meu patrimonio em 4 meses.
+
+O Bitcoin caiu 52% da maxima historica. E eu nao vendi um unico satoshi.
+
+Os holders de longo prazo reduziram as vendas em 87%. Enquanto a maioria estava desesperada, quem tem tese segurou firme.
+
+Agora o BTC ta de volta nos $72 mil. RSI em zona neutra.
+
+Aguentar o peso do mercado e igual aguentar o peso na academia: quem desiste no meio da serie nunca ve o resultado.
+
+Salva esse post. Manda pra aquele amigo que vendeu no fundo.
+
+#bitcoin #btc #criptomoedas #investimentos #hodl #bitcoinbrasil #financaspessoais #dca #mindset #academia #disciplina #andrefranco</div>
+<button class="copy-btn" onclick="copyLeg(this,'leg1')">Copiar</button></div>
+
+<div class="legenda-card"><h3>Reel 2 — So faltam 1 milhao de Bitcoins</h3>
+<div class="legenda-text" id="leg2">So restam 1 milhao de Bitcoins. Pra sempre.
+
+De 21 milhoes que vao existir, 20 milhoes ja foram minerados.
+
+Isso significa que 95% de todo o Bitcoin ja foi criado — e o ultimo so sera minerado em 2140.
+
+Nao existe banco central que imprima mais.
+Nao existe governo que mude a regra.
+E matematica.
+
+Salva esse Reel. Manda pra alguem que ainda nao entendeu o Bitcoin.
+
+#bitcoin #btc #criptomoedas #investimentos #escassez #financas #educacaofinanceira #bitcoinbrasil #blockchain #investir #dinheiro #liberdadefinanceira #andrefranco</div>
+<button class="copy-btn" onclick="copyLeg(this,'leg2')">Copiar</button></div>
+
+<div class="legenda-card"><h3>Reel 3 — As baleias pararam de vender</h3>
+<div class="legenda-text" id="leg3">As baleias reduziram vendas em 87%. De 250 mil BTC/mes para 32 mil. Colapso de oferta. Quando quem tem bilhoes para de vender e voce vende... quem ta errado? #Bitcoin #BTC #Baleias #LongTermHolders #Criptomoedas #AndreFranco</div>
+<button class="copy-btn" onclick="copyLeg(this,'leg3')">Copiar</button></div>
+
+<div class="legenda-card"><h3>Reel 4 — O Fed decide o futuro do seu dinheiro dia 18</h3>
+<div class="legenda-text" id="leg4">Dia 18 de marco, o Fed decide os juros dos EUA. Bitcoin em $72k. Correlacao com S&P 500 em 0.55. Marca essa data. #bitcoin #fed #powell #juros #criptomoedas #investimentos #andrefranco</div>
+<button class="copy-btn" onclick="copyLeg(this,'leg4')">Copiar</button></div>
+
+<div class="legenda-card"><h3>Reel 5 — 38% das altcoins estao no menor preco do ciclo</h3>
+<div class="legenda-text" id="leg5">38% das altcoins estao no menor preco desse ciclo.
+
+Enquanto o Bitcoin se mantem firme, a maioria das alts esta esmagada. Ninguem quer. Ninguem olha.
+
+Mas a historia mostra: depois que o BTC lidera, o capital escorre pra baixo. Sempre aconteceu.
+
+A questao nao e "se" vai acontecer. E: voce sabe escolher quais vao subir e quais vao morrer no chao?
+
+Oportunidade sem criterio e so aposta.
+
+Salva esse Reel e manda pra quem precisa ouvir isso.
+
+#altcoins #bitcoin #criptomoedas #investimentos #cripto #mercadocripto #altseason #oportunidade #btc #ethereum #blockchain #investir #educacaofinanceira #andrefranco</div>
+<button class="copy-btn" onclick="copyLeg(this,'leg5')">Copiar</button></div>
+
+<div class="legenda-card"><h3>Reel 6 — Bitcoin e S&P 500: grudados</h3>
+<div class="legenda-text" id="leg6">Bitcoin pra se proteger da bolsa? Correlacao BTC x S&P500 em 0.55 — andando juntos. O vilao: dolar forte. No curto prazo, mesma quadra, mesmo lado da rede. #bitcoin #sp500 #investimentos #criptomoedas #diversificacao #andrefranco #padel</div>
+<button class="copy-btn" onclick="copyLeg(this,'leg6')">Copiar</button></div>
+
+<div class="legenda-card"><h3>Reel 7 — Uma lei pode mudar tudo no mercado cripto</h3>
+<div class="legenda-text" id="leg7">O Congresso americano ta revisando o Clarity Act — define quais criptos sao commodities e quais sao valores mobiliarios. Em marco: DC Blockchain Summit + Digital Asset Summit. Quase ninguem ta falando. #clarityact #cripto #sec #regulacao #bitcoin #altcoins #andrefranco</div>
+<button class="copy-btn" onclick="copyLeg(this,'leg7')">Copiar</button></div>
+
+<div class="legenda-card"><h3>Reel 8 — DCA: a estrategia mais chata e mais lucrativa</h3>
+<div class="legenda-text" id="leg8">A estrategia que mais me deu dinheiro e tao chata que 90% das pessoas desistem em 3 meses.
+
+DCA — aportes regulares. Toda semana. Todo mes. Nao importa se ta subindo ou caindo.
+
+Quem fez DCA desde a maxima historica tem preco medio muito menor do que quem ficou esperando o "momento certo".
+
+DCA e igual treino: ninguem fica forte com uma serie. Fica forte repetindo. Toda semana. Sem parar.
+
+Marca aquele amigo que fica esperando o fundo perfeito.
+
+#dca #bitcoin #criptomoedas #investimentos #aportesregulares #btc #financaspessoais #estrategia #consistencia #andrefranco</div>
+<button class="copy-btn" onclick="copyLeg(this,'leg8')">Copiar</button></div>
+
+<div class="legenda-card"><h3>Reel 9 — Bitcoin vs Ouro: quem vence?</h3>
+<div class="legenda-text" id="leg9">Ouro: 5.000 anos. Bitcoin: 17 anos — rendeu mais na ultima decada. Ratio BTC/Ouro na minima de 2 anos. Historicamente = rally vem. Ouro e defesa. Bitcoin e ataque. Quem ganha os proximos 10 anos? Minha aposta: BTC. #bitcoin #ouro #gold #btcvsgold #investimentos #andrefranco</div>
+<button class="copy-btn" onclick="copyLeg(this,'leg9')">Copiar</button></div>
+
+<div class="legenda-card"><h3>Reel 10 — Marco pode ser o mes que muda tudo</h3>
+<div class="legenda-text" id="leg10">5 eventos em marco: Fed dia 18, Clarity Act, DC Blockchain + Digital Asset Summit, 20M BTC minerado, LTH pararam de vender. Nunca aconteceu antes. Comenta "MARCO" pro material completo. #Bitcoin #BTC #Marco2026 #Fed #ClarityAct #AndreFranco</div>
+<button class="copy-btn" onclick="copyLeg(this,'leg10')">Copiar</button></div>
+
+<div class="legenda-card"><h3>Reel 11 — A Selic vai cair. O que fazer com seu dinheiro?</h3>
+<div class="legenda-text" id="leg11">A Selic ta caindo. R$100 mil no CDI: de R$14.250 pra R$12.000/ano. Sao R$2.250 a MENOS sem ninguem te avisar. Quando a Selic cai, dinheiro inteligente migra. #selic #cdb #rendafixa #investimentos #copom #cripto #bitcoin #andrefranco</div>
+<button class="copy-btn" onclick="copyLeg(this,'leg11')">Copiar</button></div>
+
+<div class="legenda-card"><h3>Reel 12 — Inflacao controlada e mentira confortavel</h3>
+<div class="legenda-text" id="leg12">R$100 em 1994 valem R$15 hoje.
+
+"Mas a inflacao ta controlada." Ta, sim. Controlada em te empobrecer devagar.
+
+IPCA de 3,91%? Parece inofensivo. Mas acumulado desde o Plano Real, o real perdeu 85% do poder de compra.
+
+Cada ano tira um pedacinho. Voce nao percebe. Ate que a torre cai.
+
+A inflacao controlada e a mentira mais confortavel que te contam.
+
+Salva esse Reel. Manda pra quem acha que deixar dinheiro parado na poupanca e "seguro".
+
+#inflacao #ipca #poderdecompra #economia #dinheiro #investimentos #educacaofinanceira #planorreal #real #bitcoin #protecao #financas #brasil #andrefranco</div>
+<button class="copy-btn" onclick="copyLeg(this,'leg12')">Copiar</button></div>
+
+<div class="legenda-card"><h3>Reel 13 — O real esta se valorizando. Bom ou ruim?</h3>
+<div class="legenda-text" id="leg13">Dolar caiu de R$5,50 pra R$5,45. O bom: compras internacionais mais baratas. O lado que ninguem fala: exportadores ganham menos, bolsa pode sofrer, seu BTC em reais rende menos. Antes de comemorar, entenda de que lado da quadra voce esta. #dolar #real #cambio #bitcoin #investimentos #andrefranco</div>
+<button class="copy-btn" onclick="copyLeg(this,'leg13')">Copiar</button></div>
+
+<div class="legenda-card"><h3>Reel 14 — PIB de 1.82%: o Brasil esta andando de lado</h3>
+<div class="legenda-text" id="leg14">O Brasil cresce 1,82% ao ano. A poupanca tambem.
+
+PIB 2026: 1,82%. Selic: 14,25% (caindo pra 12%). Inflacao: 3,91%.
+
+Na pratica, seu dinheiro parado em renda fixa ta empatando com a inflacao.
+
+Enquanto isso: Bitcoin +300% em 4 anos. Ouro: maxima historica. Dolar: subindo.
+
+Voce quer andar no ritmo do Brasil ou no ritmo do mundo?
+
+Salva e manda pra quem acha que poupanca e investimento.
+
+#pib #economiabrasil #investimentos #bitcoin #ouro #dolar #selic #inflacao #rendafixa #criptomoedas #andrefranco</div>
+<button class="copy-btn" onclick="copyLeg(this,'leg14')">Copiar</button></div>
+
+<div class="legenda-card"><h3>Reel 15 — Renda fixa em 2026: ainda vale a pena?</h3>
+<div class="legenda-text" id="leg15">Renda fixa 14% parece otimo. Mas a Selic ta caindo. De 14,25% pra 12%. Cada corte = rendimento evaporando. Custo de oportunidade: BTC fez 150% no ultimo ciclo. Conforto demais custa caro. Link na bio. #RendaFixa #Selic #Bitcoin #CustoDeOportunidade #AndreFranco</div>
+<button class="copy-btn" onclick="copyLeg(this,'leg15')">Copiar</button></div>
+
+<div class="legenda-card"><h3>Reel 16 — Investir e mais simples do que montar LEGO</h3>
+<div class="legenda-text" id="leg16">Investir e mais simples do que montar LEGO. E serio.
+
+Uma peca sozinha nao faz nada. Mas pecas diferentes, encaixadas com inteligencia, formam algo solido. Isso e diversificacao.
+
+Agora, se voce coloca tudo igual, empilhado numa coisa so... uma hora cai.
+
+Nao precisa ser genio. Nao precisa de MBA. Precisa de bom senso e pecas diferentes.
+
+Se uma crianca de 7 anos entende, voce tambem entende.
+
+Salva e manda pra aquela pessoa que acha que investir e complicado.
+
+#investimentos #diversificacao #educacaofinanceira #financaspessoais #investir #dinheiro #lego #simplificando #criptomoedas #acoes #rendafixa #carteira #iniciantes #andrefranco</div>
+<button class="copy-btn" onclick="copyLeg(this,'leg16')">Copiar</button></div>
+
+<div class="legenda-card"><h3>Reel 17 — Seu patrimonio e um musculo</h3>
+<div class="legenda-text" id="leg17">Ninguem fica forte treinando uma vez. Ninguem fica rico investindo uma vez.
+
+Primeira serie doi. Segunda doi mais. Na terceira voce quer parar.
+
+Mas quem para na terceira serie nunca muda o shape. E quem para de investir na terceira queda nunca muda de vida.
+
+Seu patrimonio e um musculo. Cresce com consistencia. Aporte atras de aporte.
+
+Nao existe atalho. Existe repeticao, disciplina e tempo.
+
+Comeca hoje. Repete amanha. Nao para.
+
+#patrimonio #investimentos #mindset #disciplina #consistencia #academia #treino #bitcoin #criptomoedas #financaspessoais #educacaofinanceira #andrefranco</div>
+<button class="copy-btn" onclick="copyLeg(this,'leg17')">Copiar</button></div>
+
+<div class="legenda-card"><h3>Reel 18 — A piscina que ninguem te ensina a construir</h3>
+<div class="legenda-text" id="leg18">Todo mundo quer a piscina. Ninguem quer cavar o buraco. R$500/mes em FIIs = um balde. Staking ETH = outro. Dividendos = outro. A piscina nao enche de uma vez. Enche com consistencia. Comeca a encher a sua. Link na bio. #RendaPassiva #LiberdadeFinanceira #FIIs #Staking #Dividendos #AndreFranco</div>
+<button class="copy-btn" onclick="copyLeg(this,'leg18')">Copiar</button></div>
+
+<div class="legenda-card"><h3>Reel 19 — O mercado e um jogo de padel</h3>
+<div class="legenda-text" id="leg19">O melhor jogador de padel nunca tenta matar a bola. Ele espera. O melhor investidor faz a mesma coisa. Bitcoin sozinho nao e estrategia. BTC + renda fixa + acoes + ouro = equipe que ganha jogo. Para de tentar matar a bola. Joga com inteligencia. #investimentos #bitcoin #padel #diversificacao #estrategia #andrefranco</div>
+<button class="copy-btn" onclick="copyLeg(this,'leg19')">Copiar</button></div>
+
+<div class="legenda-card"><h3>Reel 20 — O escritorio do investidor do futuro</h3>
+<div class="legenda-text" id="leg20">Ha 30 anos, investir exigia terno, corretor e ligacao. Hoje? Mesa, notebook e Wi-Fi. A tecnologia mudou QUEM pode investir. Antes: dinheiro. Hoje: informacao. #investimentos #tecnologia #bitcoin #fintech #descentralizacao #educacaofinanceira #andrefranco</div>
+<button class="copy-btn" onclick="copyLeg(this,'leg20')">Copiar</button></div>
+
+</div><!-- end sub-legendas -->
+
+</div><!-- end view-andre -->
+
+</div><!-- end content -->
+
+<script>
+function showView(v){
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  event.target.classList.add('active');
+}
+function showSub(s){
+  document.querySelectorAll('.sub-view').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.sub-tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('sub-'+s).classList.add('active');
+  event.target.classList.add('active');
+}
+function toggleTake(el){
+  const body=el.nextElementSibling;
+  const arrow=el.querySelector('.arrow');
+  body.classList.toggle('open');
+  arrow.classList.toggle('open');
+}
+function toggleReel(el){
+  const body=el.nextElementSibling;
+  body.classList.toggle('open');
+}
+function toggleLoc(el){
+  const body=el.nextElementSibling;
+  if(body.style.display==='none'){body.style.display='block';}
+  else{body.style.display='none';}
+}
+function copyLeg(btn,id){
+  const text=document.getElementById(id).innerText;
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.textContent='Copiado!';
+    btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='Copiar';btn.classList.remove('copied');},2000);
+  }).catch(()=>{
+    const ta=document.createElement('textarea');
+    ta.value=text;document.body.appendChild(ta);ta.select();
+    document.execCommand('copy');document.body.removeChild(ta);
+    btn.textContent='Copiado!';btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='Copiar';btn.classList.remove('copied');},2000);
+  });
+}
+</script>
+</body>
+</html>
